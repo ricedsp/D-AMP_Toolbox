@@ -1,0 +1,158 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML is auto-generated from an M-file.
+To make changes, update the M-file and republish this document.
+      --><title>MATLAB xUnit Test Framework: How to Test an Error Message</title><meta name="generator" content="MATLAB 7.10"><meta name="date" content="2010-07-29"><meta name="m-file" content="exException"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h1><a href="../index.html">MATLAB xUnit Test Framework</a>: How to Test an Error Message</h1><p>It's surprising to most people (but not quality engineers) how often programmers make errors in error-handling code.  Because of this unfortunate truth, it is useful to write unit tests that verify that your MATLAB code throws the proper error, at the proper time.</p><p>The assertion function that makes this task easy is <tt>assertExceptionThrown</tt>.  This example shows how to write a unit test that verifies the "Too many input arguments" error for the <tt>cos</tt> function.</p><p>Your first step is to determine the <i>error identifier</i> associated with the error message.  You can find out the error identifier by using the <tt>lasterror</tt> function.</p><p>If you call <tt>cos</tt> with two input arguments, like this:</p><pre> cos(1, 2)</pre><p>you get this error message:</p><pre> Error using ==&gt; cos
+ Too many input arguments.</pre><p>Then if you call <tt>lasterror</tt>, you get this output:</p><pre> ans =</pre><pre>        message: [1x45 char]
+     identifier: 'MATLAB:maxrhs'
+          stack: [0x1 struct]</pre><p>So the <i>identifier</i> associated with this error message is <tt>'MATLAB:maxrhs'</tt>.</p><p>When you write your test function, you'll form an anonymous function handle that calls <tt>cos</tt> with the erroneous additional input argument.</p><pre class="codeinput">f = @() cos(1, 2)
+</pre><pre class="codeoutput">
+f = 
+
+    @()cos(1,2)
+
+</pre><p>You then pass this function to <tt>assertExceptionThrown</tt>, along with the expected error identifier.</p><pre class="codeinput">assertExceptionThrown(f, <span class="string">'MATLAB:maxrhs'</span>);
+</pre><p><tt>assertExceptionThrown</tt> verifies that when <tt>f()</tt> is called, an error results with the specified error identifier.</p><p>Here's our error condition test for the <tt>cos</tt> function.</p><pre class="codeinput">cd <span class="string">examples_general</span>
+type <span class="string">testCos</span>
+</pre><pre class="codeoutput">
+function test_suite = testCos
+initTestSuite;
+
+function testTooManyInputs
+assertExceptionThrown(@() cos(1, 2), 'MATLAB:maxrhs');
+</pre><p>Run the test using <tt>runtests</tt>.</p><pre class="codeinput">runtests <span class="string">testCos</span>
+</pre><pre class="codeoutput">Starting test run with 1 test case.
+.
+PASSED in 0.018 seconds.
+</pre><p><a href="../index.html">Back to MATLAB xUnit Test Framework</a></p><p class="footer">Copyright 2008-2010 The MathWorks, Inc.<br>
+      Published with MATLAB&reg; 7.10<br></p></div><!--
+##### SOURCE BEGIN #####
+%% <../index.html MATLAB xUnit Test Framework>: How to Test an Error Message
+% It's surprising to most people (but not quality engineers) how
+% often programmers make errors in error-handling code.  Because of
+% this unfortunate truth, it is useful to write unit tests that
+% verify that your MATLAB code throws the proper error, at the
+% proper time.
+%
+% The assertion function that makes this task easy is
+% |assertExceptionThrown|.  This example shows how to write a unit
+% test that verifies the "Too many input arguments" error for the
+% |cos| function.
+%
+% Your first step is to determine the _error identifier_ associated
+% with the error message.  You can find out the error identifier by
+% using the |lasterror| function.
+%
+% If you call |cos| with two input arguments, like this:
+%
+%   cos(1, 2)
+%
+% you get this error message:
+%
+%   Error using ==> cos
+%   Too many input arguments. 
+%
+% Then if you call |lasterror|, you get this output:
+%
+%   ans = 
+%   
+%          message: [1x45 char]
+%       identifier: 'MATLAB:maxrhs'
+%            stack: [0x1 struct]
+%
+% So the _identifier_ associated with this error message is
+% |'MATLAB:maxrhs'|.
+%
+% When you write your test function, you'll form an anonymous
+% function handle that calls |cos| with the erroneous additional
+% input argument.
+
+f = @() cos(1, 2)
+
+%%
+% You then pass this function to |assertExceptionThrown|, along with
+% the expected error identifier.
+
+assertExceptionThrown(f, 'MATLAB:maxrhs');
+
+%%
+% |assertExceptionThrown| verifies that when |f()| is called, an
+% error results with the specified error identifier.
+%
+% Here's our error condition test for the |cos| function.
+
+cd examples_general
+type testCos
+
+%%
+% Run the test using |runtests|.
+
+runtests testCos
+
+%%
+% <../index.html Back to MATLAB xUnit Test Framework>
+
+%%
+% Copyright 2008-2010 The MathWorks, Inc.
+##### SOURCE END #####
+--></body></html>

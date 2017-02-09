@@ -1,0 +1,233 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML is auto-generated from an M-file.
+To make changes, update the M-file and republish this document.
+      --><title>MATLAB xUnit Test Framework: How to Run Tests Silently and Query the Results</title><meta name="generator" content="MATLAB 7.10"><meta name="date" content="2010-07-29"><meta name="m-file" content="exSilentRunning"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h1><a href="../index.html">MATLAB xUnit Test Framework</a>: How to Run Tests Silently and Query the Results</h1><p>When you run a test suite using <tt>runtests</tt>, the results are summarized in the Command Window.  This example shows you how to run a test suite so that nothing prints to the Command Window, and it shows you how to write a program to automatically determine the results of running the test suite.</p><p>There are four steps to follow.</p><p>1. Construct a <tt>TestSuite</tt> object.  In this example we'll use the <tt>fromPwd</tt> method of the <tt>TestSuite</tt> class to construct a test suite using all the test cases found in the <tt>examples_general</tt> directory.</p><pre class="codeinput">cd <span class="string">examples_general</span>
+suite = TestSuite.fromPwd();
+</pre><p>You can look up information about the individual test cases.</p><pre class="codeinput">suite.TestComponents{1}
+</pre><pre class="codeoutput">
+ans = 
+
+  TestSuite handle
+
+  Properties:
+    TestComponents: {[1x1 TestUsingTestCase]  [1x1 TestUsingTestCase]}
+              Name: 'TestUsingTestCase'
+          Location: [1x80 char]
+
+
+</pre><p>You can see above that the first test component in the test suite is itself another test suite, which contains the test cases defined by the M-file named TestUsingTestCase. Here's what one of these individual test cases looks like:</p><pre class="codeinput">suite.TestComponents{1}.TestComponents{1}
+</pre><pre class="codeoutput">
+ans = 
+
+  TestUsingTestCase handle
+
+  Properties:
+            fh: []
+    MethodName: 'testPointer'
+          Name: 'testPointer'
+      Location: 'C:\Users\eddins\local-work\matlab_xunit\doc\examples_general\TestUsingTestCase.m'
+
+
+</pre><p>2. Construct a TestLogger object.  This object can receive notifications about what happens when a test suite is executed.</p><pre class="codeinput">logger = TestRunLogger;
+</pre><p>3. Call the <tt>run</tt> method of the <tt>TestSuite</tt> object, passing it the logger.</p><pre class="codeinput">suite.run(logger);
+</pre><p>The <tt>TestLogger</tt> object can now be queried to determine what happened during the test.</p><pre class="codeinput">logger
+</pre><pre class="codeoutput">
+logger = 
+
+  TestRunLogger handle
+
+  Properties:
+             Log: {1x34 cell}
+     NumFailures: 1
+       NumErrors: 1
+    NumTestCases: 8
+          Faults: [1x2 struct]
+
+
+</pre><p>There were eight test cases run (logger.NumTestCases), resulting in one test failure and one test error.  Detailed information about what went wrong can be found in <tt>logger.Faults</tt>.</p><pre class="codeinput">logger.Faults(1)
+</pre><pre class="codeoutput">
+ans = 
+
+         Type: 'failure'
+     TestCase: [1x1 FunctionHandleTestCase]
+    Exception: [1x1 MException]
+
+</pre><pre class="codeinput">logger.Faults(2)
+</pre><pre class="codeoutput">
+ans = 
+
+         Type: 'error'
+     TestCase: [1x1 FunctionHandleTestCase]
+    Exception: [1x1 MException]
+
+</pre><p>You can drill further to determine the names of the failing tests, as well as the complete stack trace associated with each failure.</p><pre class="codeinput">logger.Faults(1).TestCase
+</pre><pre class="codeoutput">
+ans = 
+
+  FunctionHandleTestCase handle
+
+  Properties:
+    MethodName: 'runTestCase'
+          Name: 'testSinPi'
+      Location: 'C:\Users\eddins\local-work\matlab_xunit\doc\examples_general\testBadSinTest.m'
+
+
+</pre><pre class="codeinput">logger.Faults(1).Exception.stack(1)
+</pre><pre class="codeoutput">
+ans = 
+
+    file: 'C:\Users\eddins\local-work\matlab_xunit\doc\examples_general\testBadSinTest.m'
+    name: 'testSinPi'
+    line: 7
+
+</pre><pre class="codeinput">logger.Faults(1).Exception.stack(2)
+</pre><pre class="codeoutput">
+ans = 
+
+    file: 'C:\Users\eddins\local-work\matlab_xunit\xunit\FunctionHandleTestCase.m'
+    name: 'FunctionHandleTestCase.runTestCase'
+    line: 112
+
+</pre><p><a href="../index.html">Back to MATLAB xUnit Test Framework</a></p><p class="footer">Copyright 2008-2010 The MathWorks, Inc.<br>
+      Published with MATLAB&reg; 7.10<br></p></div><!--
+##### SOURCE BEGIN #####
+%% <../index.html MATLAB xUnit Test Framework>: How to Run Tests Silently and Query the Results
+% When you run a test suite using |runtests|, the results are
+% summarized in the Command Window.  This example shows you how to
+% run a test suite so that nothing prints to the Command Window, and
+% it shows you how to write a program to automatically determine the
+% results of running the test suite.
+%
+% There are four steps to follow.
+%
+% 1. Construct a |TestSuite| object.  In this example we'll use the |fromPwd|
+% method of the |TestSuite| class to construct a test suite using all the test
+% cases found in the |examples_general| directory.
+
+cd examples_general
+suite = TestSuite.fromPwd();
+
+%%
+% You can look up information about the individual test cases.
+
+suite.TestComponents{1}
+
+%%
+% You can see above that the first test component in the test suite is itself
+% another test suite, which contains the test cases defined by the M-file named
+% TestUsingTestCase. Here's what one of these individual test cases looks like:
+
+suite.TestComponents{1}.TestComponents{1}
+
+%%
+% 2. Construct a TestLogger object.  This object can receive
+% notifications about what happens when a test suite is executed.
+
+logger = TestRunLogger;
+
+%%
+% 3. Call the |run| method of the |TestSuite| object, passing it the
+% logger.
+
+suite.run(logger);
+
+%%
+% The |TestLogger| object can now be queried to determine what
+% happened during the test.
+
+logger
+
+%%
+% There were eight test cases run (logger.NumTestCases), resulting in
+% one test failure and one test error.  Detailed information about
+% what went wrong can be found in |logger.Faults|.
+
+logger.Faults(1)
+
+%%
+
+logger.Faults(2)
+
+%%
+% You can drill further to determine the names of the failing tests,
+% as well as the complete stack trace associated with each failure.
+
+logger.Faults(1).TestCase
+
+%%
+
+logger.Faults(1).Exception.stack(1)
+
+%%
+
+logger.Faults(1).Exception.stack(2)
+
+%%
+% <../index.html Back to MATLAB xUnit Test Framework>
+
+%%
+% Copyright 2008-2010 The MathWorks, Inc.
+
+##### SOURCE END #####
+--></body></html>

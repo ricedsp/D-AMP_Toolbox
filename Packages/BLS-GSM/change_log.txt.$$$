@@ -1,0 +1,33 @@
+
+* October 14, 2004
+
+function "vectorize.m" is renamed to "vector.m", and all the references to this function are updated.
+This has been made to avoid overlap with MATLAB's "vectorize.m" function.
+
+
+* November 11, 2004
+
+- "denoi_BLS_GSM":
+	* Fixed bug affecting images with dimensions non-multiple of exponents of two (in "denoi_BLS_GSM.m")
+	* Fixed bug affecting the case when PS (the noise power spectral density) has different spatial dimensions from the image. 
+
+- "decomp_reconst" ('s', 'fs', 'uw'):
+	* Fixed bug affecting the computation of the noise covariance matrix (a small scalar factor)
+
+
+* November 26, 2004
+
+- "decomp_reconst" ('s', 'fs', 'uw'):
+	* Fixed remaining bug affecting the computation of the noise covariance matrix (a small scalar factor for the parent)
+
+
+* February 23, 2005
+
+- "decomp_reconst_WU" :
+	* Fixed remaining bug:
+	Line 75
+	"[BL, C_w] = denoi_BLS_GSM_band(BL,block,BLn,prnt,covariance,optim,sig);"
+	is changed to:
+	"BL = denoi_BLS_GSM_band(BL,block,BLn,prnt,covariance,optim,sig);"
+
+

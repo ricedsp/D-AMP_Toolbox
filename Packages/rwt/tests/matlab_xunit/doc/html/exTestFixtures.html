@@ -1,0 +1,129 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML is auto-generated from an M-file.
+To make changes, update the M-file and republish this document.
+      --><title>MATLAB xUnit Test Framework: How to Write Tests That Share Common Set-Up Code</title><meta name="generator" content="MATLAB 7.10"><meta name="date" content="2010-07-29"><meta name="m-file" content="exTestFixtures"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h1><a href="../index.html">MATLAB xUnit Test Framework</a>: How to Write Tests That Share Common Set-Up Code</h1><p>Sometimes you want to write a set of test cases in which the same set of initialization steps is performed before each test case, or in which the same set of cleanup steps is performed after each test case.  This set of common <i>setup</i> and <i>teardown</i> code is called a <i>test fixture</i>.</p><p>In subfunction-based test files, you can add subfunctions whose names begin with "setup" and "teardown".  These functions will be called before and after every test-case subfunction is called.  If the setup function returns an output argument, that value is saved and passed to every test-case subfunction and also to the teardown function.</p><p>This example shows a setup function that creates a figure and returns its handle.  The figure handle is passed to each test-case subfunction.  The figure handle is also passed to the teardown function, which cleans up after each test case by deleting the figure.</p><pre class="codeinput">cd <span class="string">examples_general</span>
+type <span class="string">testSetupExample</span>
+</pre><pre class="codeoutput">
+function test_suite = testSetupExample
+initTestSuite;
+
+function fh = setup
+fh = figure;
+
+function teardown(fh)
+delete(fh);
+
+function testColormapColumns(fh)
+assertEqual(size(get(fh, 'Colormap'), 2), 3);
+
+function testPointer(fh)
+assertEqual(get(fh, 'Pointer'), 'arrow');
+
+</pre><p>Run the tests using <tt>runtests</tt>.</p><pre class="codeinput">runtests <span class="string">testSetupExample</span>
+</pre><pre class="codeoutput">Starting test run with 2 test cases.
+..
+PASSED in 0.095 seconds.
+</pre><p>You might also want to see the <a href="./exTestCase.html">example on writing test cases by subclassing TestCase</a>.</p><p><a href="../index.html">Back to MATLAB xUnit Test Framework</a></p><p class="footer">Copyright 2008-2010 The MathWorks, Inc.<br>
+      Published with MATLAB&reg; 7.10<br></p></div><!--
+##### SOURCE BEGIN #####
+%% <../index.html MATLAB xUnit Test Framework>: How to Write Tests That Share Common Set-Up Code
+% Sometimes you want to write a set of test cases in which the same
+% set of initialization steps is performed before each test case, or
+% in which the same set of cleanup steps is performed after each
+% test case.  This set of common _setup_ and _teardown_ code is
+% called a _test fixture_.
+%
+% In subfunction-based test files, you can add subfunctions whose
+% names begin with "setup" and "teardown".  These functions will be
+% called before and after every test-case subfunction is called.  If
+% the setup function returns an output argument, that value is saved
+% and passed to every test-case subfunction and also to the teardown
+% function.
+%
+% This example shows a setup function that creates a figure and 
+% returns its handle.  The figure handle is passed to each test-case
+% subfunction.  The figure handle is also passed to the teardown
+% function, which cleans up after each test case by deleting the
+% figure.
+
+cd examples_general
+type testSetupExample
+
+%%
+% Run the tests using |runtests|.
+
+runtests testSetupExample
+
+%%
+% You might also want to see the 
+% <./exTestCase.html example on writing test cases by
+% subclassing TestCase>.
+
+%%
+% <../index.html Back to MATLAB xUnit Test Framework>
+
+%%
+% Copyright 2008-2010 The MathWorks, Inc.
+##### SOURCE END #####
+--></body></html>

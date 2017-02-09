@@ -1,0 +1,136 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>MATLAB xUnit Test Framework: How RUNTESTS Searches for Test Cases</title><meta name="generator" content="MATLAB 7.11"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2010-11-19"><meta name="DC.source" content="exTestCaseSearching.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h1><a href="../index.html">MATLAB xUnit Test Framework</a>: How RUNTESTS Searches for Test Cases</h1><p>When you call <tt>runtests</tt> with no input arguments:</p><pre> &gt;&gt; runtests</pre><p>it automatically searches for all the test cases in the current directory.  It looks for test cases in three types of M-files:</p><p>1. An M-file function whose name begins or ends with "test" or "Test" and that does not return an output argument.  Such a function is considered to be a single test case.</p><p>2. An M-file function whose name begins or ends with "test" or "Test" and that returns an output argument that is a test suite.  Such a function is considered to contain subfunction-style test cases.  Each subfunction whose name begins or ends with "test" or "Test" is a test case.</p><p>3. An M-file that defines a subclass of TestCase.  Each method beginning or ending with "test" or "Test" is a test case.</p><p><tt>runtests</tt> uses the <tt>TestSuite</tt> static methods <tt>fromName</tt> and <tt>fromPwd</tt> to automatically construct the test suites.</p><p>Here are a couple of examples.</p><p><tt>TestSuite.fromName</tt> takes an M-file name, determines what kind of test file it is, and returns a cell array of test case objects.</p><pre class="codeinput">cd <span class="string">examples_general</span>
+test_suite_1 = TestSuite.fromName(<span class="string">'testSetupExample'</span>)
+</pre><pre class="codeoutput">
+test_suite_1 = 
+
+  TestSuite handle
+
+  Properties:
+    TestComponents: {[1x1 FunctionHandleTestCase]  [1x1 FunctionHandleTestCase]}
+              Name: 'testSetupExample'
+          Location: [1x79 char]
+
+
+</pre><p><tt>TestSuite.fromPwd</tt> returns a test suite based on all the test files in the current directory.</p><pre class="codeinput">test_suite_2 = TestSuite.fromPwd()
+</pre><pre class="codeoutput">
+test_suite_2 = 
+
+  TestSuite handle
+
+  Properties:
+    TestComponents: {1x6 cell}
+              Name: 'C:\Users\eddins\local-work\matlab_xunit\doc\examples_general'
+          Location: 'C:\Users\eddins\local-work\matlab_xunit\doc\examples_general'
+
+
+</pre><p><a href="../index.html">Back to MATLAB xUnit Test Framework</a></p><p class="footer">Copyright 2008-2010 The MathWorks, Inc.<br>
+      Published with MATLAB&reg; 7.11<br></p></div><!--
+##### SOURCE BEGIN #####
+%% <../index.html MATLAB xUnit Test Framework>: How RUNTESTS Searches for Test Cases
+% When you call |runtests| with no input arguments:
+%
+%   >> runtests
+%
+% it automatically searches for all the test cases in the current directory.  It
+% looks for test cases in three types of M-files:
+%
+% 1. An M-file function whose name begins or ends with "test" or "Test" and that does
+% not return an output argument.  Such a function is considered to be a single
+% test case. 
+%
+% 2. An M-file function whose name begins or ends with "test" or "Test" and that returns
+% an output argument that is a test suite.  Such a function is considered to contain
+% subfunction-style test cases.  Each subfunction whose name begins or ends with "test"
+% or "Test" is a test case. 
+%
+% 3. An M-file that defines a subclass of TestCase.  Each method beginning or ending with
+% "test" or "Test" is a test case.
+%
+% |runtests| uses the |TestSuite| static methods |fromName| and |fromPwd| to
+% automatically construct the test suites.
+%
+% Here are a couple of examples.
+%
+% |TestSuite.fromName| takes an M-file name, determines what
+% kind of test file it is, and returns a cell array of test case objects.
+
+cd examples_general
+test_suite_1 = TestSuite.fromName('testSetupExample')
+
+%%
+% |TestSuite.fromPwd| returns a test suite based on all the test files in the
+% current directory.
+
+test_suite_2 = TestSuite.fromPwd()
+
+%%
+% <../index.html Back to MATLAB xUnit Test Framework>
+
+%%
+% Copyright 2008-2010 The MathWorks, Inc.
+##### SOURCE END #####
+--></body></html>

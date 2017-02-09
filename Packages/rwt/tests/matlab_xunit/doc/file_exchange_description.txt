@@ -1,0 +1,9 @@
+MATLAB xUnit Test Framework is a unit test framework for MATLAB code.
+
+MATLAB xUnit is designed to be easy to use for MATLAB users with a wide range of experience. Users can write tests using ordinary M-files that are very simple in structure.
+
+MATLAB xUnit comes with extensive documentation that ranges in scope from a "Getting Started" section to advanced techniques and architectural notes. You can view this documentation online without downloading the package. For example, scroll down to the "Published M Files" section on this page and click on "MATLAB xUnit Quick Start - How to write and run tests."  To see all the MATLAB xUnit documentation online, scroll down to the "HTML Files" section on this page and click on "Readme.html."
+
+Only the "xunit" directory is needed to use the framework.  The "tests" directory contains the framework's own test suite.  The "architecture" directory contains architectural notes on the framework's design and how it might be extended.
+
+MATLAB xUnit can be used with MATLAB releases R2008a and later. MATLAB xUnit relies heavily on object-oriented language features introduced in R2008a and will not work with earlier releases.

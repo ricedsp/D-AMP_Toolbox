@@ -1,0 +1,172 @@
+<html>
+    <head>
+        <title>MATLAB&reg; xUnit Test Framework</title>
+    </head>
+    <body>
+        <h1>MATLAB<sup>&reg;</sup> xUnit Test Framework</h1>
+
+        <p>
+            MATLAB xUnit is a unit test framework for MATLAB code.  
+            MATLAB xUnit is designed to be easy to use for MATLAB users with a 
+            wide range of experience. Users can write tests using 
+            ordinary M-files that are very simple in structure.  
+        </p>
+
+        <p>
+            <strong>Important Note:</strong> MATLAB xUnit 
+            relies heavily on object-oriented language features
+            introduced in MATLAB 7.6 (R2008a), which was released in March 2008.   
+            MATLAB xUnit functions and classes will not work in earlier MATLAB releases.
+            In addition, writing and running tests inside packages requires MATLAB
+            7.7 (R008b) or later.
+        </p>
+        
+
+        
+        
+        <h2>Installation</h2>
+        
+        <p>
+        To use MATLAB xUnit in MATLAB, add the "xunit" folder (directory) to the MATLAB path.  See the <a href="http://www.mathworks.com/access/helpdesk/help/techdoc/matlab_env/f10-26235.html">
+            MATLAB documentation for setting
+        the search path</a>. (The "tests" directory contains the 
+        framework's own self-tests, and the "architecture" directory contains
+        information about the framework architecture; these directories are not
+        needed for using MATLAB xUnit.)
+        </p>
+        
+        <p>
+        <strong>Note for users of earlier versions of MATLAB xUnit:</strong> If you have already
+        written unit tests based on MTEST, an earlier version of MATLAB xUnit, you may also want 
+        to add the "obsolete" folder to the MATLAB path. This folder contains the old command-line
+        test runner, <tt>mtest</tt>, as well as the deprecated function <tt>assertAlmostEqual</tt>.
+        </p>
+        
+        <h2>Getting Started</h2>
+        
+        <p>
+            <a href="html/exQuickStart.html">Quick Start: How to Write and
+            Run Tests</a>
+        </p>
+        
+        <p>
+            <a href="html/exSubfunctionTests.html">How to Put Multiple Test
+            Cases in One M-file</a>
+        </p>
+        
+        <p>
+            <a href="html/exRunSpecificTest.html">How to Run a Specific Test</a>
+        </p>
+        
+        <p>
+            <a href="html/exRunTestsInADirectory.html">How to Run Tests in Specific Directories</a>
+        </p>
+        
+        <p>
+            <a href="html/exRunTestsInPackage.html">How to Run Tests in a Package</a>
+        </p>
+        
+        <h2>Advanced Usage</h2>
+        
+        <p>
+            <a href="html/exTolerance.html">How to Test Using a Floating-Point Tolerance</a>
+        </p>
+        
+        <p>
+            <a href="html/exException.html">How to Test an Error Message</a>
+        </p>
+        
+        <p>
+            <a href="html/exSilentRunning.html">How to Run Tests Silently and Query the Results</a>
+        </p>
+        
+        <p>
+            <a href="html/exTestFixtures.html">How to Write Tests That Share Common
+            Set-Up Code</a>
+        </p>
+        
+        <p>
+            <a href="html/exTestCase.html">How to Write xUnit-Style Tests by 
+            Subclassing TestCase</a>
+        </p>
+        
+        <p>
+            <a href="html/exTestCaseSearching.html">How MATLAB xUnit Searches for Test 
+            Cases</a>
+        </p>
+        
+        <h2>Key Functions and Classes</h2>
+        
+        <p>
+            Main test driver function:
+            <ul>
+                <li>
+                    <a href="matlab:doc runtests"><code>runtests</code></a>
+                </li>
+            </ul>
+        </p>
+        
+        <p>
+            Assertion functions you can use in your tests:
+            <ul>
+                <li>
+                    <a href="matlab:doc assertTrue"><code>assertTrue</code></a>
+                </li>
+                <li>
+                    <a href="matlab:doc assertFalse"><code>assertFalse</code></a>
+                </li>
+                <li>
+                    <a href="matlab:doc assertEqual"><code>assertEqual</code></a>
+                </li>
+                <li>
+                    <a href="matlab:doc assertFilesEqual"><code>assertFilesEqual</code></a>
+                </li>
+                <li>
+                    <a href="matlab:doc assertElementsAlmostEqual"><code>assertElementsAlmostEqual</code></a>
+                </li>
+                <li>
+                    <a href="matlab:doc assertVectorsAlmostEqual"><code>assertVectorsAlmostEqual</code></a>
+                </li>
+                <li>
+                    <a href="matlab:doc assertExceptionThrown"><code>assertExceptionThrown</code></a>
+                </li>
+            </ul>
+        </p>
+        
+        <p>
+            The key xUnit-style classes that make everything work:
+            <ul>
+                <li>
+                    <a href="matlab:doc TestComponent"><code>TestComponent</code></a>
+                </li>
+                <li>
+                    <a href="matlab:doc TestSuite"><code>TestSuite</code></a>
+                </li>                
+                <li>
+                    <a href="matlab:doc TestCase"><code>TestCase</code></a>
+                </li>
+                <li>
+                    <a href="matlab:doc FunctionHandleTestCase"><code>FunctionHandleTestCase</code></a>
+                </li>
+                <li>
+                    <a href="matlab:doc TestRunMonitor"><code>TestRunMonitor</code></a>
+                </li>                
+                <li>
+                    <a href="matlab:doc TestRunLogger"><code>TestRunLogger</code></a>
+                </li>
+                <li>
+                    <a href="matlab:doc CommandWindowTestRunDisplay"><code>CommandWindowTestRunDisplay</code></a>
+                </li>
+            </ul>
+        </p>
+
+        <p>
+            <a href="release-history.html">Release History</a>
+        </p>
+        
+        <p>
+            <em>Copyright 2008-2010 The MathWorks, Inc.</em>
+        </p>
+        
+    </body>
+</html>

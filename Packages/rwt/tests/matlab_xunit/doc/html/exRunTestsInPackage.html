@@ -1,0 +1,116 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>MATLAB xUnit Test Framework: How to Run Tests in a Package</title><meta name="generator" content="MATLAB 7.11"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2010-11-19"><meta name="DC.source" content="exRunTestsInPackage.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h1><a href="../index.html">MATLAB xUnit Test Framework</a>: How to Run Tests in a Package</h1><p>To run all the test cases in a package, give the name of the package as an argument to <tt>runtests</tt>. <b>Note:</b> Running tests in a package requires MATLAB R2009a or later.</p><p>For example, suppose you are distributing a set of MATLAB files called the "ABC Toolbox." Then you could put your tests inside a package called abc_tests and run them like this:</p><pre class="codeinput">runtests <span class="string">abc_tests</span>
+</pre><pre class="codeoutput">Test suite: abc_tests
+Test suite location: Package
+19-Nov-2010 14:14:36
+
+Starting test run with 2 test cases.
+..
+PASSED in 0.028 seconds.
+</pre><p>(Note that the initial "+" character in the name of the package folder on disk is not part of the package name.)</p><p>Or you could put your tests inside a subpackage called abc.tests and run them like this:</p><pre class="codeinput">runtests <span class="string">abc.tests</span>
+</pre><pre class="codeoutput">Test suite: abc.tests
+Test suite location: Package
+19-Nov-2010 14:14:36
+
+Starting test run with 2 test cases.
+..
+PASSED in 0.001 seconds.
+</pre><p>You should not use a generic top-level package name such "tests" because then your package might be unintentionally combined with packages with the same name created by other people.</p><p><a href="../index.html">Back to MATLAB xUnit Test Framework</a></p><p class="footer">Copyright 2010 The MathWorks, Inc.<br>
+      Published with MATLAB&reg; 7.11<br></p></div><!--
+##### SOURCE BEGIN #####
+%% <../index.html MATLAB xUnit Test Framework>: How to Run Tests in a Package
+% To run all the test cases in a package, give the name of the
+% package as an argument to |runtests|. *Note:* Running tests in a package
+% requires MATLAB R2009a or later.
+%
+% For example, suppose you are distributing a set of MATLAB files called the
+% "ABC Toolbox." Then you could put your tests inside a package called abc_tests
+% and run them like this:
+
+runtests abc_tests
+
+%%
+% (Note that the initial "+" character in the name of the package folder on disk
+% is not part of the package name.)
+%
+% Or you could put your tests inside a subpackage called abc.tests and run them
+% like this:
+
+runtests abc.tests
+
+%%
+% You should not use a generic top-level package name such "tests" because then
+% your package might be unintentionally combined with packages with the same
+% name created by other people.  
+
+%%
+% <../index.html Back to MATLAB xUnit Test Framework>
+
+%%
+% Copyright 2010 The MathWorks, Inc.
+
+##### SOURCE END #####
+--></body></html>

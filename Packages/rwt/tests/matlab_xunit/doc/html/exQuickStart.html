@@ -1,0 +1,143 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML is auto-generated from an M-file.
+To make changes, update the M-file and republish this document.
+      --><title>MATLAB xUnit Test Framework: How to Write and Run Tests</title><meta name="generator" content="MATLAB 7.10"><meta name="date" content="2010-07-29"><meta name="m-file" content="exQuickStart"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h1><a href="../index.html">MATLAB xUnit Test Framework</a>: How to Write and Run Tests</h1><!--introduction--><p>This example shows how to write and run a couple of test cases for the MATLAB <tt>fliplr</tt> function.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Make a folder for your tests</a></li><li><a href="#2">Write each test case as a simple M-file</a></li><li><a href="#5">Run all the tests using <tt>runtests</tt></a></li></ul></div><h2>Make a folder for your tests<a name="1"></a></h2><p>To get started, create a folder (directory) that will contain your tests, and then make that your working folder.  The test directory in this example is example_quick_start.</p><pre class="codeinput">cd <span class="string">example_quick_start</span>
+</pre><h2>Write each test case as a simple M-file<a name="2"></a></h2><p>Write each test case as an M-file function that returns no output arguments. The function name should start or end with "test" or "Test".  The test case passes if the function runs with no error.</p><p>Here's a test-case M-file that verifies the correct output for a vector input.</p><pre class="codeinput">type <span class="string">testFliplrVector</span>
+</pre><pre class="codeoutput">
+function testFliplrVector
+%testFliplrVector Unit test for fliplr with vector input
+
+in = [1 4 10];
+out = fliplr(in);
+expected_out = [10 4 1];
+
+if ~isequal(out, expected_out)
+    error('testFliplrVector:notEqual', 'Incorrect output for vector.');
+end
+
+</pre><p>The function <tt>testFliplrVector</tt> calls the function being tested and checks the output against the expected output.  If the output is different than expected, the function calls <tt>error</tt>.</p><p>Here's another test-case M-file that verifies the correct <tt>fliplr</tt> output for a matrix input.</p><pre class="codeinput">type <span class="string">testFliplrMatrix</span>
+</pre><pre class="codeoutput">
+function testFliplrMatrix
+%testFliplrMatrix Unit test for fliplr with matrix input
+
+in = magic(3);
+assertEqual(fliplr(in), in(:, [3 2 1]));
+
+</pre><p>This function is simpler than <tt>testFliplrVector</tt> because it uses the utility testing function <tt>assertEqual</tt>.  <tt>assertEqual</tt> checks to see whether its two inputs are equal. If they are equal, <tt>assertEqual</tt> simply returns silently. If they are not equal, <tt>assertEqual</tt> calls <tt>error</tt>.</p><h2>Run all the tests using <tt>runtests</tt><a name="5"></a></h2><p>To run all your test cases, simply call <tt>runtests</tt>.  <tt>runtests</tt> automatically finds all the test cases in the current directory, runs them, and reports the results to the Command Window.</p><pre class="codeinput">runtests
+</pre><pre class="codeoutput">Starting test run with 2 test cases.
+..
+PASSED in 0.002 seconds.
+</pre><p><a href="../index.html">Back to MATLAB xUnit Test Framework</a></p><p class="footer">Copyright 2008-2010 The MathWorks, Inc.<br>
+      Published with MATLAB&reg; 7.10<br></p></div><!--
+##### SOURCE BEGIN #####
+%% <../index.html MATLAB xUnit Test Framework>: How to Write and Run Tests 
+% This example shows how to write and run a couple of test cases for the MATLAB
+% |fliplr| function.
+
+%% Make a folder for your tests
+% To get started, create a folder (directory) that will contain your tests, and
+% then make that your working folder.  The test directory in this example is
+% example_quick_start.
+
+cd example_quick_start
+
+%% Write each test case as a simple M-file
+% Write each test case as an M-file function that returns no output arguments.
+% The function name should start or end with "test" or "Test".  The test case
+% passes if the function runs with no error.
+%
+% Here's a test-case M-file that verifies the correct output for a vector input.
+
+type testFliplrVector
+
+%%
+% The function |testFliplrVector| calls the function being tested and checks the
+% output against the expected output.  If the output is different than expected,
+% the function calls |error|.
+%
+% Here's another test-case M-file that verifies the correct |fliplr| output for
+% a matrix input.
+
+type testFliplrMatrix
+
+%%
+% This function is simpler than |testFliplrVector| because it uses the utility
+% testing function |assertEqual|.  |assertEqual| checks to see whether its two
+% inputs are equal. If they are equal, |assertEqual| simply returns silently.
+% If they are not equal, |assertEqual| calls |error|.
+
+%% Run all the tests using |runtests|
+% To run all your test cases, simply call |runtests|.  |runtests| automatically finds
+% all the test cases in the current directory, runs them, and reports the
+% results to the Command Window.
+
+runtests
+
+%%
+% <../index.html Back to MATLAB xUnit Test Framework>
+
+%%
+% Copyright 2008-2010 The MathWorks, Inc.
+##### SOURCE END #####
+--></body></html>

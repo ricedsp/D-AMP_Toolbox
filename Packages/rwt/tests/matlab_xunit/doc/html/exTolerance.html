@@ -1,0 +1,192 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML is auto-generated from an M-file.
+To make changes, update the M-file and republish this document.
+      --><title>MATLAB xUnit Test Framework: How to Test Using a Floating-Point Tolerance</title><meta name="generator" content="MATLAB 7.10"><meta name="date" content="2010-07-29"><meta name="m-file" content="exTolerance"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h1><a href="../index.html">MATLAB xUnit Test Framework</a>: How to Test Using a Floating-Point Tolerance</h1><p>MATLAB performs arithmetic operations using the floating-point hardware instructions on your processor. Because almost all floating-point operations are subject to round-off error, arithmetic operations can sometimes produce surprising results. Here's an example.</p><pre class="codeinput">a = 1 + 0.1 + 0.1 + 0.1
+</pre><pre class="codeoutput">
+a =
+
+    1.3000
+
+</pre><pre class="codeinput">a == 1.3
+</pre><pre class="codeoutput">
+ans =
+
+     0
+
+</pre><p>So why doesn't <tt>a</tt> equal 1.3? Because 0.1, 1.3, and most other decimal fractions do not have exact representations in the binary floating-point number representation your computer uses.  The first line above is doing an approximate addition of 1 plus an approximation of 0.1, plus an approximation of 0.1, plus an approximation of 0.1.  The second line compares the result of all that with an approximation of 1.3.</p><p>If you subtract 1.3 from <tt>a</tt>, you can see that the computed result for <tt>a</tt> is <i>extremely close</i> to the floating-point approximation of 1.3, but it is not exactly the same.</p><pre class="codeinput">a - 1.3
+</pre><pre class="codeoutput">
+ans =
+
+  2.2204e-016
+
+</pre><p>As a general rule, when comparing the results of floating-point calculations for equality, it is necessary to use a tolerance value.  Two types of tolerance comparisons are commonly used: absolute tolerance and relative tolerance.  An absolute tolerance comparison of <i>a</i> and <i>b</i> looks like:</p><p><img src="exTolerance_eq55725.png" alt="$$|a-b| \leq T$$"></p><p>A relative tolerance comparison looks like:</p><p><img src="exTolerance_eq28823.png" alt="$$|a-b| \leq T\max(|a|,|b|) + T_f$$"></p><p>where <i>Tf</i> is called the <i>floor tolerance</i>. It acts as an absolute tolerance when <i>a</i> and <i>b</i> are very close to 0.</p><p>For example, suppose that <i>a</i> is 100, <i>b</i> is 101, and T is 0.1.  Then <i>a</i> and <i>b</i> would not be considered equal using an absolute tolerance, because 1 &gt; 0.1.  However, <i>a</i> and <i>b</i> would be considered equal using a relative tolerance, because they differ by only 1 part in 100.</p><p>MATLAB xUnit provides the utility assertion functions called <tt>assertElementsAlmostEqual</tt> and <tt>assertVectorAlmostEqual</tt>. These functions make it easy to write tests involving floating-point tolerances.</p><p><tt>assertElementsAlmostEqual(A,B)</tt> applies the tolerance test independently to every element of <tt>A</tt> and <tt>B</tt>.  The function uses a relative tolerance test by default, but you make it use an absolute tolerance test, or change the tolerance values used, by passing additional arguments to it.</p><p><tt>assertVectorsAlmostEqual(A,B)</tt> applies the tolerance test to the vectors <tt>A</tt> and <tt>B</tt> in the L2-norm sense.  For example, suppose <tt>A</tt> is <tt>[1 1e10</tt>], <tt>B</tt> is <tt>[2 1e10]</tt>, and the tolerance is 1e-8.  Then <tt>A</tt> and <tt>B</tt> would fail an elementwise relative tolerance comparison, because the relative difference between the first elements is 0.5.  However, they would pass a vector relative tolerance comparison, because the relative vector difference between <tt>A</tt> and <tt>B</tt> is only about 1 part in 1e10.</p><p>The <tt>examples_general</tt> directory contains a portion of a unit test for the <tt>sin</tt> function.  The output of <tt>sin</tt> can sometimes be a bit surprising because of floating-point issues.  For example:</p><pre class="codeinput">sin(pi)
+</pre><pre class="codeoutput">
+ans =
+
+  1.2246e-016
+
+</pre><p>That's very close but not exactly equal to 0.  Here's how the <tt>sin</tt> unit test uses <tt>assertElementsAlmostEqual</tt> to write the <tt>sin(pi)</tt> test with a minimum of fuss.</p><pre class="codeinput">cd <span class="string">examples_general</span>
+type <span class="string">testSin</span>
+</pre><pre class="codeoutput">
+function testSin
+
+assertElementsAlmostEqual(sin(pi), 0);
+</pre><p>Run the test using <tt>runtests</tt>.</p><pre class="codeinput">runtests <span class="string">testSin</span>
+</pre><pre class="codeoutput">Starting test run with 1 test case.
+.
+PASSED in 0.023 seconds.
+</pre><p><a href="../index.html">Back to MATLAB xUnit Test Framework</a></p><p class="footer">Copyright 2008-2010 The MathWorks, Inc.<br>
+      Published with MATLAB&reg; 7.10<br></p></div><!--
+##### SOURCE BEGIN #####
+%% <../index.html MATLAB xUnit Test Framework>: How to Test Using a Floating-Point Tolerance
+% MATLAB performs arithmetic operations using the floating-point
+% hardware instructions on your processor. Because
+% almost all floating-point operations are subject to round-off
+% error, arithmetic operations can sometimes produce surprising
+% results. Here's an example.
+
+a = 1 + 0.1 + 0.1 + 0.1
+
+%%
+a == 1.3
+
+%%
+% So why doesn't |a| equal 1.3? Because 0.1, 1.3, and most other
+% decimal fractions do not have exact representations in the binary
+% floating-point number representation your computer uses.  The
+% first line above is doing an approximate addition of 1 plus an
+% approximation of 0.1, plus an approximation of 0.1, plus an
+% approximation of 0.1.  The second line compares the result of all
+% that with an approximation of 1.3.
+%
+% If you subtract 1.3 from |a|, you can see that the computed result
+% for |a| is _extremely close_ to the floating-point approximation
+% of 1.3, but it is not exactly the same.
+
+a - 1.3
+
+%%
+% As a general rule, when comparing the results of floating-point
+% calculations for equality, it is necessary to use a tolerance
+% value.  Two types of tolerance comparisons are commonly used: absolute
+% tolerance and relative tolerance.  An absolute tolerance comparison of _a_ and _b_ 
+% looks like:
+%
+% $$|a-b| \leq T$$
+%
+% A relative tolerance comparison looks like:
+%
+% $$|a-b| \leq T\max(|a|,|b|) + T_f$$
+%
+% where _Tf_ is called the _floor tolerance_. It acts as an absolute tolerance
+% when _a_ and _b_ are very close to 0.
+%
+% For example, suppose that _a_ is 100, _b_ is 101, and T is 0.1.  Then _a_ and
+% _b_ would not be considered equal using an absolute tolerance, because 1 >
+% 0.1.  However, _a_ and _b_ would be considered equal using a relative
+% tolerance, because they differ by only 1 part in 100.
+%
+% MATLAB xUnit provides the utility assertion functions called
+% |assertElementsAlmostEqual| and |assertVectorAlmostEqual|. These functions
+% make it easy to write tests involving floating-point tolerances.
+%
+% |assertElementsAlmostEqual(A,B)| applies the tolerance test independently to
+% every element of |A| and |B|.  The function uses a relative tolerance test by
+% default, but you make it use an absolute tolerance test, or change the
+% tolerance values used, by passing additional arguments to it.
+%
+% |assertVectorsAlmostEqual(A,B)| applies the tolerance test to the vectors |A|
+% and |B| in the L2-norm sense.  For example, suppose |A| is |[1 1e10|], |B|
+% is |[2 1e10]|, and the tolerance is 1e-8.  Then |A| and |B| would fail an
+% elementwise relative tolerance comparison, because the relative difference
+% between the first elements is 0.5.  However, they would pass a vector relative
+% tolerance comparison, because the relative vector difference between |A| and
+% |B| is only about 1 part in 1e10.
+%
+% The |examples_general| directory contains a portion of a unit test for the
+% |sin| function.  The output of |sin| can sometimes be a bit surprising because
+% of floating-point issues.  For example:
+
+sin(pi)
+
+%%
+% That's very close but not exactly equal to 0.  Here's how the
+% |sin| unit test uses |assertElementsAlmostEqual| to write the |sin(pi)|
+% test with a minimum of fuss.
+
+cd examples_general
+type testSin
+
+%%
+% Run the test using |runtests|.
+
+runtests testSin
+
+%%
+% <../index.html Back to MATLAB xUnit Test Framework>
+
+%%
+% Copyright 2008-2010 The MathWorks, Inc.
+##### SOURCE END #####
+--></body></html>
