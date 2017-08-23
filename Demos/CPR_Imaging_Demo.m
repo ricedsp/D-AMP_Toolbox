@@ -33,7 +33,7 @@ x_hat = DprGAMP(y,iters,width,height,denoiser,M,Beta_damp,wvar,x_init);
 
 %D-prGAMP Recovery Performance
 performance=PSNR(x_0,abs(x_hat));
-[num2str(SamplingRate*100),'% Sampling ', denoiser, '-AMP Reconstruction PSNR=',num2str(performance)]
+[num2str(SamplingRate*100),'% Sampling ', denoiser, '-prGAMP Reconstruction PSNR=',num2str(performance)]
 
 %Plot Recovered Signals
 subplot(1,2,1);
