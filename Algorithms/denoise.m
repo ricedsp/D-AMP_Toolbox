@@ -120,10 +120,72 @@ switch denoiser
         [NA, output]=BM3D(1,noisy,sigma_hat,'np',0);
         output=255*output;
     case 'fast-BM3D'
+        noisy=real(noisy);
         [NA, output]=BM3D(1,noisy,sigma_hat,'lc',0);
         output=255*output;
     case 'BM3D-SAPCA'
         output = 255*BM3DSAPCA2009(noisy/255,sigma_hat/255);
+    case 'DnCNN'
+        noisy=real(noisy);
+        global_vars=who('global');
+        if ~any(ismember(global_vars,'net_300to500'));
+            error('You need to run LoadNetworkWeights before you can use the DnCNN denoiser');
+        end
+        if sigma_hat>300
+            global net_300to500
+            input = gpuArray(single(noisy/255));
+            res    = vl_simplenn(net_300to500,input,[],[],'conserveMemory',true,'mode','test');
+            output = input - res(end).x;
+            output = 255*double(gather(output));
+        elseif sigma_hat>150
+            global net_150to300
+            input = gpuArray(single(noisy/255));
+            res    = vl_simplenn(net_150to300,input,[],[],'conserveMemory',true,'mode','test');
+            output = input - res(end).x;
+            output = 255*double(gather(output));
+        elseif sigma_hat>100
+            global net_100to150
+            input = gpuArray(single(noisy/255));
+            res    = vl_simplenn(net_100to150,input,[],[],'conserveMemory',true,'mode','test');
+            output = input - res(end).x;
+            output = 255*double(gather(output));
+        elseif sigma_hat>80
+            global net_80to100
+            input = gpuArray(single(noisy/255));
+            res    = vl_simplenn(net_80to100,input,[],[],'conserveMemory',true,'mode','test');
+            output = input - res(end).x;
+            output = 255*double(gather(output));
+        elseif sigma_hat>60
+            global net_60to80
+            input = gpuArray(single(noisy/255));
+            res    = vl_simplenn(net_60to80,input,[],[],'conserveMemory',true,'mode','test');
+            output = input - res(end).x;
+            output = 255*double(gather(output));
+        elseif sigma_hat>40
+            global net_40to60
+            input = gpuArray(single(noisy/255));
+            res    = vl_simplenn(net_40to60,input,[],[],'conserveMemory',true,'mode','test');
+            output = input - res(end).x;
+            output = 255*double(gather(output));
+        elseif sigma_hat>20
+            global net_20to40
+            input = gpuArray(single(noisy/255));
+            res    = vl_simplenn(net_20to40,input,[],[],'conserveMemory',true,'mode','test');
+            output = input - res(end).x;
+            output = 255*double(gather(output));
+        elseif sigma_hat>10
+            global net_10to20
+            input = gpuArray(single(noisy/255));
+            res    = vl_simplenn(net_10to20,input,[],[],'conserveMemory',true,'mode','test');
+            output = input - res(end).x;
+            output = 255*double(gather(output));
+        else
+            global net_0to10
+            input = gpuArray(single(noisy/255));
+            res    = vl_simplenn(net_0to10,input,[],[],'conserveMemory',true,'mode','test');
+            output = input - res(end).x;
+            output = 255*double(gather(output));
+        end
     otherwise
         error('Unrecognized Denoiser')
 end
