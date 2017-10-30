@@ -19,24 +19,39 @@ m=round(n*SamplingRate);
 x_init=255*rand(n,1);
 
 %Generate Gaussian Measurement Matrix
-M=randn(m,n)+1i*randn(m,n);
+M1=randn(m,n)+1i*randn(m,n);
 for j = 1:n
-    M(:,j) = M(:,j) ./ sqrt(sum(abs(M(:,j)).^2));
+    M1(:,j) = M1(:,j) ./ sqrt(sum(abs(M1(:,j)).^2));
 end
+
+%Generate Coded Diffraction Pattern Handle
+signvec = exp(1i*2*pi*rand(n,1));
+inds=[1;randsample(n-1,m-1)+1];
+I=speye(n);
+SubsampM=I(inds,:);
+M2=@(x) SubsampM*reshape(fft2(reshape(bsxfun(@times,signvec,x(:)),[height,width])),[n,1])*(1/sqrt(n))*sqrt(n/m);
+Mt2=@(x) bsxfun(@times,conj(signvec),reshape(ifft2(reshape(SubsampM'*x(:),[height,width])),[n,1]))*sqrt(n)*sqrt(n/m);
+M2_norm2=n;
 
 %Compute magnitudes of compressive samples of the signal
 w=sqrt(wvar)*(randn(m,1)+1i*randn(m,1));
-y=abs(M*x_0(:)+w);
+y1=abs(M1*x_0(:)+w);
+y2=abs(M2(x_0(:))+w);
 
 %Recover Signal using D-prGAMP algorithm
-x_hat = DprGAMP(y,iters,width,height,denoiser,M,Beta_damp,wvar,x_init);
+PNSR_func=@(x) PSNR(x_0(:),abs(x(:)));
+[x_hat1, PSNR_hist1] = DprGAMP(y1,iters,width,height,denoiser,M1,[],[],Beta_damp,wvar,x_init,PNSR_func);
+[x_hat2, PSNR_hist2] = DprGAMP(y2,iters,width,height,denoiser,M2,Mt2,M2_norm2,Beta_damp,wvar,x_init,PNSR_func);
 
 %D-prGAMP Recovery Performance
-performance=PSNR(x_0,abs(x_hat));
-[num2str(SamplingRate*100),'% Sampling ', denoiser, '-prGAMP Reconstruction PSNR=',num2str(performance)]
+display([num2str(SamplingRate*100),'% Sampling ', denoiser, '-prGAMP Gaussian Measurements Reconstruction PSNR=',num2str(PSNR_hist1(end))])
+display([num2str(SamplingRate*100),'% Sampling ', denoiser, '-prGAMP Coded Diffraction Pattern Reconstruction PSNR=',num2str(PSNR_hist2(end))])
 
 %Plot Recovered Signals
-subplot(1,2,1);
+subplot(1,3,1);
 imshow(uint8(x_0));title('Original Image');
-subplot(1,2,2);
-imshow(uint8(abs(x_hat)));title([denoiser, '-prGAMP']);
+subplot(1,3,2);
+imshow(uint8(abs(x_hat1)));title([denoiser, '-prGAMP Gaussian Measurements']);
+subplot(1,3,3);
+imshow(uint8(abs(x_hat2)));title([denoiser, '-prGAMP Coded Diffraction Pattern']);
+

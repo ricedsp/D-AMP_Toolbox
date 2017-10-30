@@ -1,4 +1,4 @@
-function [x_hat, PSNR] = DprGAMP(y,iters,width,height,denoiser,A_mat,Beta,wvar,x_init,PSNR_func)
+function [x_hat, PSNR] = DprGAMP(y,iters,width,height,denoiser,A_func,At_func,A_norm2,Beta,wvar,x_init,PSNR_func)
 % function [x_hat, PSNR] = DprGAMP(y,iters,width,height,denoiser,A_mat,Beta,wvar,x_init,PSNR_func)
 % this function implements D-prGAMP based on any denoiser present in the
 % denoise function
@@ -9,7 +9,9 @@ function [x_hat, PSNR] = DprGAMP(y,iters,width,height,denoiser,A_mat,Beta,wvar,x
 %       height  : height of the sampeled signal. height=1 for 1D signals
 %       denoiser: string that determines which denosier to use. e.g.
 %       denoiser='BM3D'
-%       A_mat  : Measurement matrix A
+%       A_func : Measurement matrix A or forward operator function handle
+%       At_func: Backward operator function handle
+%       A_norm2: Frobenius norm squared of the meaurement matrix
 %       Beta   : damping parameter (small beta is slow but robust)
 %       wvar   : an estimate of the measurement noise
 %       x_init : initial guess for x
@@ -17,14 +19,20 @@ function [x_hat, PSNR] = DprGAMP(y,iters,width,height,denoiser,A_mat,Beta,wvar,x
 %       x_hat   : the recovered signal
 %       PSNR    : the PSNR trajectory. 
 
-if (nargin<10)||isempty(PSNR_func) % no PSNR trajectory
+if (nargin>=7)&&(~isempty(At_func)) % function handles
+    A=@(x) A_func(x);
+    At=@(z) At_func(z);
+    if isempty(A_norm2)
+        error('The frobenius norm squared of A is required to use function handles');
+    end
+else % explicit Matrix
+    A=@(x)A_func*x;
+    At=@(z)A_func'*z;
+    A_norm2=norm(A_func,'fro')^2;
+end
+if (nargin<12)||isempty(PSNR_func) % no PSNR trajectory
     PSNR_func = @(x) nan;
 end
-
-A_norm2=norm(A_mat,'fro')^2;
-
-A=@(x)A_mat*x;
-At=@(z)A_mat'*z;
 
 g_out=@(phat,pvar,y,sigma2_w) g_out_phaseless(phat,pvar,y,sigma2_w);
 g_in=@(noisy,sigma_hat) denoise(noisy,sigma_hat,width,height,denoiser);
@@ -59,20 +67,17 @@ for i=1:iters
 end
 x_hat=reshape(x,[height width]);
 end
-function [g,dg] = g_out_phaseless(phat,pvar,y,sigma2_w)
+function [g,dg] = g_out_phaseless(phat,pvar,y_abs,sigma2_w)
 %Borrowed from GAMP toolbox. http://gampmatlab.wikia.com/wiki/Generalized_Approximate_Message_Passing
-        var0=sigma2_w;
-        y_abs=y;
-        m=length(y);
         phat_abs=abs(phat);
-        B = 2*y_abs.*phat_abs./(var0+pvar);
+        B = 2*y_abs.*phat_abs./(sigma2_w+pvar);
         I1overI0 = min( B./(sqrt(B.^2+4)), ...
             B./(0.5+sqrt(B.^2+0.25)) );%upper bounds (11)&(16) from Amos
-        y_sca = y_abs./(1+var0./pvar);
-        phat_sca = phat_abs./(1+pvar./var0);
+        y_sca = y_abs./(1+sigma2_w./pvar);
+        phat_sca = phat_abs./(1+pvar./sigma2_w);
         zhat = (phat_sca + y_sca.*I1overI0).*sign(phat);
         sigma2_z = y_sca.^2 + phat_sca.^2 ...
-            + (1+B.*I1overI0)./(1./var0+1./pvar) ...
+            + (1+B.*I1overI0)./(1./sigma2_w+1./pvar) ...
             - abs(zhat).^2;
         g=1/pvar*(zhat-phat);
         dg=1/pvar*(mean(sigma2_z)/pvar-1);%Using uniform variance.
