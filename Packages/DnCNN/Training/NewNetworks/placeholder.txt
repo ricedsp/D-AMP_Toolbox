@@ -1,0 +1,1 @@
+Placeholder to ensure NewNetworks directory is included in git.
