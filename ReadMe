@@ -64,7 +64,7 @@ Code:
     Training_Script.sh: Bash script to train LDAMP, LDIT, and DnCNN networks.
 
 Data:
-    saved_models and TrainingData are both empty directories on github. Their contents can be downloaded from https://rice.box.com/s/n5uz3jxup375d1hg0p6yux3jsl6a4thq
+    saved_models and TrainingData are both empty directories on github. Their contents can be downloaded from https://rice.box.com/s/n5uz3jxup375d1hg0p6yux3jsl6a4thq. You may run into Box's file size limit. In that case download one directory at a time.
 
 Important: At present the TensorFlow networks are smaller than the Matlab networks and have been trained with less data. For the best possible LDAMP performance use the 20 layer version of the "DnCNN" denoiser in CS_Imaging_Demo_LDAMP.m
 
