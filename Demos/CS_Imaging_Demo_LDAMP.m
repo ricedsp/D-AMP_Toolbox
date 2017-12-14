@@ -23,16 +23,34 @@ m=round(n*SamplingRate);
 errfxn = @(x_hat) PSNR(x_0,reshape(x_hat,[height width]));
 
 
-%Generate Gaussian Measurement Matrix
-% M=1/sqrt(m)*randn(m,n);
+% %Generate Gaussian Measurement Matrix
+% M_matrix=1/sqrt(m)*randn(m,n);
+% M=@(x) M_matrix*x(:);
+% Mt=@(x) M_matrix'*x(:);
+% U=[];
+% Ut=[];
+% d=[];
 
-%Generate Coded Diffraction Pattern Measurement Matrix
-signvec = exp(1i*2*pi*rand(n,1));
+
+% %Generate Coded Diffraction Pattern Measurement Matrix
+% signvec = exp(1i*2*pi*rand(n,1));
+% inds=[1;randsample(n-1,m-1)+1];
+% I=speye(n);
+% SubsampM=I(inds,:);
+% M=@(x) SubsampM*reshape(fft2(reshape(bsxfun(@times,signvec,x(:)),[height,width])),[n,1])*(1/sqrt(n))*sqrt(n/m);
+% Mt=@(x) bsxfun(@times,conj(signvec),reshape(ifft2(reshape(SubsampM'*x(:),[height,width])),[n,1]))*sqrt(n)*sqrt(n/m);
+% U=@(x) x(:);
+% Ut= @(x) x(:);
+% d=ones(m,1)*n/m;
+
+%Generate Real-valued Measurement Matrix with Fast Transformation and
+%approximately i.i.d. Gaussian distribution
+signvec = 2*round(rand(n,1))-1;
 inds=[1;randsample(n-1,m-1)+1];
 I=speye(n);
 SubsampM=I(inds,:);
-M=@(x) SubsampM*reshape(fft2(reshape(bsxfun(@times,signvec,x(:)),[height,width])),[n,1])*(1/sqrt(n))*sqrt(n/m);
-Mt=@(x) bsxfun(@times,conj(signvec),reshape(ifft2(reshape(SubsampM'*x(:),[height,width])),[n,1]))*sqrt(n)*sqrt(n/m);
+M=@(x) SubsampM*reshape(dct2(reshape(bsxfun(@times,signvec,x(:)),[height,width])),[n,1])*sqrt(n/m);
+Mt=@(x) bsxfun(@times,conj(signvec),reshape(idct2(reshape(SubsampM'*x(:),[height,width])),[n,1]))*sqrt(n/m);
 U=@(x) x(:);
 Ut= @(x) x(:);
 d=ones(m,1)*n/m;
