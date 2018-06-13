@@ -228,34 +228,24 @@ def LDGAMP(y,A_handle,At_handle,A_val,theta,x_true,tie):
     return xhat, MSE_history, NMSE_history, PSNR_history
 
 def init_vars_DnCNN(init_mu,init_sigma):
+    #Does not init BN variables
     weights = [None] * n_DnCNN_layers
     biases = [None] * n_DnCNN_layers
-    #The batch normalization variables are not stored in theta. They are accessed using their names.
-    #betas = [None] * n_DnCNN_layers#beta[0] and beta[-1] will be empty lists, as will moving_variances and moving_means
-    #moving_variances = [None] * n_DnCNN_layers
-    #moving_means = [None] * n_DnCNN_layers
     with tf.variable_scope("l0"):
         # Layer 1: filter_heightxfilter_width conv, channel_img inputs, num_filters outputs
         weights[0] = tf.Variable(
             tf.truncated_normal(shape=(filter_height, filter_width, channel_img, num_filters), mean=init_mu,
                                 stddev=init_sigma), dtype=tf.float32, name="w")
-        biases[0] = tf.Variable(tf.zeros(num_filters), dtype=tf.float32, name="b")
+        #biases[0] = tf.Variable(tf.zeros(num_filters), dtype=tf.float32, name="b")
     for l in range(1, n_DnCNN_layers - 1):
         with tf.variable_scope("l" + str(l)):
             # Layers 2 to Last-1: filter_heightxfilter_width conv, num_filters inputs, num_filters outputs
             weights[l] = tf.Variable(
                 tf.truncated_normal(shape=(filter_height, filter_width, num_filters, num_filters), mean=init_mu,
                                     stddev=init_sigma), dtype=tf.float32, name="w")
-            biases[l] = tf.Variable(tf.zeros(num_filters), dtype=tf.float32, name="b")#Need to initialize this with a nz value
+            #biases[l] = tf.Variable(tf.zeros(num_filters), dtype=tf.float32, name="b")#Need to initialize this with a nz value
 
-            #The following initializes the beta, moving_variance, and moving_mean variables
-            tf.layers.batch_normalization(inputs=tf.placeholder(tf.float32,[BATCH_SIZE,height_img,width_img,num_filters]), center=True, scale=False, training=False, trainable=False,name='BN', reuse=False)
-            #tf.layers.batch_normalization(inputs=tf.placeholder(tf.float32, [BATCH_SIZE, height_img, width_img, num_filters]), center=True,scale=False, training=training, trainable=False, name='BN', reuse=False)
-            #tf.layers.batch_normalization(name='BN', reuse=False)
-            #with tf.variable_scope("BN"):
-                #betas[l] = tf.Variable(tf.zeros(num_filters),dtype=tf.float32,name="beta")
-                #moving_variances[l] = tf.Variable(tf.zeros(num_filters), dtype=tf.float32, name="moving_variance")
-                #moving_means[l] = tf.Variable(tf.zeros(num_filters), dtype=tf.float32, name="moving_mean")
+            #tf.layers.batch_normalization(inputs=tf.placeholder(tf.float32,[BATCH_SIZE,height_img,width_img,num_filters]), center=True, scale=False, training=False, trainable=False,name='BN', reuse=False)
 
     with tf.variable_scope("l" + str(n_DnCNN_layers - 1)):
         # Last Layer: filter_height x filter_width conv, num_filters inputs, 1 outputs
@@ -263,7 +253,7 @@ def init_vars_DnCNN(init_mu,init_sigma):
             tf.truncated_normal(shape=(filter_height, filter_width, num_filters, 1), mean=init_mu,
                                 stddev=init_sigma), dtype=tf.float32,
             name="w")  # The intermediate convolutional layers act on num_filters_inputs, not just channel_img inputs.
-        biases[n_DnCNN_layers - 1] = tf.Variable(tf.zeros(1), dtype=tf.float32, name="b")
+        #biases[n_DnCNN_layers - 1] = tf.Variable(tf.zeros(1), dtype=tf.float32, name="b")
     return weights, biases#, betas, moving_variances, moving_means
 
 ## Evaluate Intermediate Error
@@ -410,11 +400,11 @@ def DnCNN_wrapper(r,rvar,theta_thislayer,reuse):
     return(xhat,dxdrMC)
 
 ## Create Denoiser Model
-def DnCNN(r,rvar, theta_thislayer,reuse):
+def DnCNN(r,rvar, theta_thislayer,reuse=False,training=False):
     ##r is n x batch_size, where in this case n would be height_img*width_img*channel_img
     #rvar is unused within DnCNN. It may have been used to select which sets of weights and biases to use.
     weights=theta_thislayer[0]
-    biases=theta_thislayer[1]
+    #biases=theta_thislayer[1]
 
     if is_complex:
         r=tf.real(r)
@@ -426,22 +416,23 @@ def DnCNN(r,rvar, theta_thislayer,reuse):
 
     #############  First Layer ###############
     # Conv + Relu
-    conv_out = tf.nn.conv2d(r, weights[0], strides=[1, 1, 1, 1], padding='SAME',data_format='NHWC') + biases[0]#NCHW works faster on nvidia hardware, however I only perform this type of conovlution once so performance difference will be negligible
-    layers[0] = tf.nn.relu(conv_out)
+    with tf.variable_scope("l0"):
+        conv_out = tf.nn.conv2d(r, weights[0], strides=[1, 1, 1, 1], padding='SAME',data_format='NHWC') #+ biases[0]#NCHW works faster on nvidia hardware, however I only perform this type of conovlution once so performance difference will be negligible
+        layers[0] = tf.nn.relu(conv_out)
 
     #############  2nd to 2nd to Last Layer ###############
     # Conv + BN + Relu
     for i in range(1,n_DnCNN_layers-1):
         with tf.variable_scope("l" + str(i)):#Added so that batch_normalization/moving_variance, moving_mean, and beta would all be placed in the l1/... l2/... respectively.
             #To inspect current variable names use vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES), and vars[index].name
-            conv_out  = tf.nn.conv2d(layers[i-1], weights[i], strides=[1, 1, 1, 1], padding='SAME') + biases[i]
-            #batch_out = tf.layers.batch_normalization(inputs=conv_out, center=True, scale=False, training=training, trainable=False, name='BN',reuse=reuse)
-            batch_out = tf.layers.batch_normalization(inputs=conv_out, center=True, scale=False, training=False, trainable=False, name='BN', reuse=reuse)#The documentation says training should be true for training and false for inference. In practice I found setting things this way killed performance
+            conv_out  = tf.nn.conv2d(layers[i-1], weights[i], strides=[1, 1, 1, 1], padding='SAME') #+ biases[i]
+            batch_out = tf.layers.batch_normalization(inputs=conv_out, training=training, name='BN', reuse=reuse)#The documentation says training should be true for training and false for inference. In practice I found setting things this way killed performance
             layers[i] = tf.nn.relu(batch_out)
 
     #############  Last Layer ###############
     # Conv
-    layers[n_DnCNN_layers-1]  = tf.nn.conv2d(layers[n_DnCNN_layers-2], weights[n_DnCNN_layers-1], strides=[1, 1, 1, 1], padding='SAME') + biases[n_DnCNN_layers-1]
+    with tf.variable_scope("l" + str(n_DnCNN_layers - 1)):
+        layers[n_DnCNN_layers-1]  = tf.nn.conv2d(layers[n_DnCNN_layers-2], weights[n_DnCNN_layers-1], strides=[1, 1, 1, 1], padding='SAME') #+ biases[n_DnCNN_layers-1]
 
     x_hat = r-layers[n_DnCNN_layers-1]
     x_hat = tf.transpose(tf.reshape(x_hat,orig_Shape))
