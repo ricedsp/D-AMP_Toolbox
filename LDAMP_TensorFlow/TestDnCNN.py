@@ -16,14 +16,14 @@ channel_img = 1 # RGB -> 3, Grayscale -> 1
 filter_height = 3
 filter_width = 3
 num_filters = 64
-n_DnCNN_layers=16
+n_DnCNN_layers=17
 
 
 ## Training Parameters
 BATCH_SIZE = 1
 
 ## Problem Parameters
-sigma_w=20./255.#Noise std
+sigma_w=25./255.#Noise std
 n=channel_img*height_img*width_img
 
 # Parameters to to initalize weights. Won't be used if old weights are loaded
@@ -52,15 +52,15 @@ theta_dncnn=LDAMP.init_vars_DnCNN(init_mu, init_sigma)
 y_measured = LDAMP.AddNoise(x_true,sigma_w)
 
 ## Construct the reconstruction model
-x_hat = LDAMP.DnCNN(y_measured,None,theta_dncnn,reuse=True)#Set reuse=true because we initialized BN variables in init_vars_DnCNN
+x_hat = LDAMP.DnCNN(y_measured,None,theta_dncnn,reuse=False,training=False)
 
 LDAMP.CountParameters()
 
 ## Load and Preprocess Test Data
 if height_img>50:
-    test_im_name = "./TrainingData/StandardTestData_" + str(height_img) + "Res.npy"
+    test_im_name = "./../../../TrainingData/StandardTestData_" + str(height_img) + "Res.npy"
 else:
-    test_im_name = "./TrainingData/TestData_patch" + str(height_img) + ".npy"
+    test_im_name = "./../../../TrainingData/TestData_patch" + str(height_img) + ".npy"
 
 test_images = np.load(test_im_name)
 test_images=test_images[:,0,:,:]
@@ -74,33 +74,35 @@ with tf.Session() as sess:
 saver = tf.train.Saver()  # defaults to saving all variables
 saver_dict={}
 with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
-    if 255.*sigma_w<10.:
-        sigma_w_min=0.
-        sigma_w_max=10.
-    elif 255.*sigma_w<20.:
-        sigma_w_min=10.
-        sigma_w_max=20.
-    elif 255.*sigma_w < 40.:
-        sigma_w_min = 20.
-        sigma_w_max = 40.
-    elif 255.*sigma_w < 60.:
-        sigma_w_min = 40.
-        sigma_w_max = 60.
-    elif 255.*sigma_w < 80.:
-        sigma_w_min = 60.
-        sigma_w_max = 80.
-    elif 255.*sigma_w < 100.:
-        sigma_w_min = 80.
-        sigma_w_max = 100.
-    elif 255.*sigma_w < 150.:
-        sigma_w_min = 100.
-        sigma_w_max = 150.
-    elif 255.*sigma_w < 300.:
-        sigma_w_min = 150.
-        sigma_w_max = 300.
-    else:
-        sigma_w_min = 300.
-        sigma_w_max = 500.
+    # if 255.*sigma_w<10.:
+    #     sigma_w_min=0.
+    #     sigma_w_max=10.
+    # elif 255.*sigma_w<20.:
+    #     sigma_w_min=10.
+    #     sigma_w_max=20.
+    # elif 255.*sigma_w < 40.:
+    #     sigma_w_min = 20.
+    #     sigma_w_max = 40.
+    # elif 255.*sigma_w < 60.:
+    #     sigma_w_min = 40.
+    #     sigma_w_max = 60.
+    # elif 255.*sigma_w < 80.:
+    #     sigma_w_min = 60.
+    #     sigma_w_max = 80.
+    # elif 255.*sigma_w < 100.:
+    #     sigma_w_min = 80.
+    #     sigma_w_max = 100.
+    # elif 255.*sigma_w < 150.:
+    #     sigma_w_min = 100.
+    #     sigma_w_max = 150.
+    # elif 255.*sigma_w < 300.:
+    #     sigma_w_min = 150.
+    #     sigma_w_max = 300.
+    # else:
+    #     sigma_w_min = 300.
+    #     sigma_w_max = 500.
+    sigma_w_min=25.
+    sigma_w_max=25.
 
     save_name = LDAMP.GenDnCNNFilename(sigma_w_min/255.,sigma_w_max/255.)
     save_name_chckpt = save_name + ".ckpt"

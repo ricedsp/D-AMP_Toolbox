@@ -48,7 +48,7 @@ n_DnCNN_layers= FLAGS.DnCNN_layers
 
 ## Training Parameters
 max_Epoch_Fails=3#How many training epochs to run without improvement in the validation error
-ResumeTraining=False#Load weights from a network you've already trained a little
+ResumeTraining=True#Load weights from a network you've already trained a little
 learning_rates = [0.001, 0.0001]#, 0.00001]
 EPOCHS = 50
 n_Train_Images=128*1600#3000
@@ -127,18 +127,9 @@ for learning_rate in learning_rates:
             ##Load previous values for the weights
             saver_initvars_name_chckpt=LDAMP.GenDnCNNFilename(sigma_w_min,sigma_w_max)+ ".ckpt"
             for l in range(0, n_DnCNN_layers):
-                saver_dict.update({"l" + str(l) + "/w": theta_dncnn[0][l],
-                                   "l" + str(l) + "/b": theta_dncnn[1][l]})
-            # for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
-            #     beta_name = "l" + str(l) + "/BN/beta:0"
-            #     var_name = "l" + str(l) + "/BN/moving_variance:0"
-            #     mean_name = "l" + str(l) + "/BN/moving_mean:0"
-            #     beta = [v for v in tf.global_variables() if v.name == beta_name][0]
-            #     moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
-            #     moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
-            #     saver_dict.update({"l" + str(l) + "/BN/beta": beta})
-            #     saver_dict.update({"l" + str(l) + "/BN/moving_variance": moving_variance})
-            #     saver_dict.update({"l" + str(l) + "/BN/moving_mean": moving_mean})
+                #saver_dict.update({"l" + str(l) + "/w": theta_dncnn[0][l],
+                #                   "l" + str(l) + "/b": theta_dncnn[1][l]})
+                saver_dict.update({"l" + str(l) + "/w": theta_dncnn[0][l]})
             saver_initvars = tf.train.Saver(saver_dict)
             saver_initvars.restore(sess, saver_initvars_name_chckpt)
         else:
