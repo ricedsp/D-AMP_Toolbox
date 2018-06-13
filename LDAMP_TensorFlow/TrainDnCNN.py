@@ -48,7 +48,7 @@ n_DnCNN_layers= FLAGS.DnCNN_layers
 
 ## Training Parameters
 max_Epoch_Fails=3#How many training epochs to run without improvement in the validation error
-ResumeTraining=True#Load weights from a network you've already trained a little
+ResumeTraining=False#Load weights from a network you've already trained a little
 learning_rates = [0.001, 0.0001]#, 0.00001]
 EPOCHS = 50
 n_Train_Images=128*1600#3000
@@ -81,11 +81,11 @@ training = tf.placeholder(tf.bool, name='training')
 sigma_w_tf = tf.placeholder(tf.float32)
 x_true = tf.placeholder(tf.float32, [n, BATCH_SIZE])
 
-## Initialize the variable theta which stores the weights and biases
-theta_dncnn=LDAMP.init_vars_DnCNN(init_mu, init_sigma)
-
 ## Construct the measurement model and handles/placeholders
 y_measured = LDAMP.AddNoise(x_true,sigma_w_tf)
+
+## Initialize the variable theta which stores the weights and biases
+theta_dncnn=LDAMP.init_vars_DnCNN(init_mu, init_sigma)
 
 ## Construct the reconstruction model
 x_hat = LDAMP.DnCNN(y_measured,None,theta_dncnn,reuse=False,training=training)
@@ -195,7 +195,8 @@ for learning_rate in learning_rates:
                     val_values.append(loss_val)
                 time_taken = time.time() - start_time
                 print np.mean(val_values)
-                if(np.mean(val_values) < best_val_error):
+                #if(np.mean(val_values) < best_val_error):
+                if True:
                     failed_epochs=0
                     best_val_error = np.mean(val_values)
                     best_sess = sess
