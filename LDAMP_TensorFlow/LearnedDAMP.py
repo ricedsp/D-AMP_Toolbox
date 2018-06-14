@@ -127,7 +127,7 @@ def GenerateMeasurementMatrix(mode):
     return A_val
 
 #Learned DAMP
-def LDAMP(y,A_handle,At_handle,A_val,theta,x_true,tie):
+def LDAMP(y,A_handle,At_handle,A_val,theta,x_true,tie,training=False):
     z = y
     xhat = tf.zeros([n, BATCH_SIZE], dtype=tf.float32)
     MSE_history=[]#Will be a list of n_DAMP_layers+1 lists, each sublist will be of size BATCH_SIZE
@@ -144,7 +144,7 @@ def LDAMP(y,A_handle,At_handle,A_val,theta,x_true,tie):
         else:
             r = xhat + At_handle(A_val,z)
             rvar = (1. / m_fp * tf.reduce_sum(tf.square(tf.abs(z)),axis=0))
-        (xhat,dxdr)=DnCNN_outer_wrapper(r, rvar,theta,tie,iter)
+        (xhat,dxdr)=DnCNN_outer_wrapper(r, rvar,theta,tie,iter,training=training)
         if is_complex:
             z = y - A_handle(A_val, xhat) + n_fp / m_fp * tf.complex(dxdr,0.) * z
         else:
@@ -156,7 +156,7 @@ def LDAMP(y,A_handle,At_handle,A_val,theta,x_true,tie):
     return xhat, MSE_history, NMSE_history, PSNR_history
 
 #Learned DIT
-def LDIT(y,A_handle,At_handle,A_val,theta,x_true,tie):
+def LDIT(y,A_handle,At_handle,A_val,theta,x_true,tie,training=False):
     z=y
     xhat = tf.zeros([n, BATCH_SIZE], dtype=tf.float32)
     MSE_history=[]#Will be a list of n_DAMP_layers+1 lists, each sublist will be of size BATCH_SIZE
@@ -173,7 +173,7 @@ def LDIT(y,A_handle,At_handle,A_val,theta,x_true,tie):
         else:
             r = xhat + At_handle(A_val,z)
             rvar = (1. / m_fp * tf.reduce_sum(tf.square(tf.abs(z)),axis=0))
-        (xhat, dxdr) = DnCNN_outer_wrapper(r, 4.*rvar, theta, tie, iter)
+        (xhat, dxdr) = DnCNN_outer_wrapper(r, 4.*rvar, theta, tie, iter,training=training)
         if is_complex:
             z = y - A_handle(A_val, xhat)
         else:
@@ -185,7 +185,7 @@ def LDIT(y,A_handle,At_handle,A_val,theta,x_true,tie):
     return xhat, MSE_history, NMSE_history, PSNR_history
 
 #Learned DGAMP
-def LDGAMP(y,A_handle,At_handle,A_val,theta,x_true,tie):
+def LDGAMP(y,A_handle,At_handle,A_val,theta,x_true,tie,training=False):
     # GAMP notation is used here
     # LDGAMP does not presently support function handles: It does not work with the latest version of the code.
     wvar = tf.square(sigma_w)#Assume noise level is known. Could be learned
@@ -218,7 +218,7 @@ def LDGAMP(y,A_handle,At_handle,A_val,theta,x_true,tie):
         rvar = tf.maximum(rvar, .00001)
         xbar = Beta * xhat + (1 - Beta) * xbar
         r = xbar + rvar * tf.matmul(A_val, s,adjoint_a=True)
-        (xhat, dxdr) = DnCNN_outer_wrapper(r, rvar, theta, tie, iter)
+        (xhat, dxdr) = DnCNN_outer_wrapper(r, rvar, theta, tie, iter,training=training)
         xvar = dxdr * rvar
         xvar = tf.maximum(xvar, .00001)
         (MSE_thisiter, NMSE_thisiter, PSNR_thisiter) = EvalError(xhat, x_true)
@@ -244,8 +244,7 @@ def init_vars_DnCNN(init_mu,init_sigma):
                 tf.truncated_normal(shape=(filter_height, filter_width, num_filters, num_filters), mean=init_mu,
                                     stddev=init_sigma), dtype=tf.float32, name="w")
             #biases[l] = tf.Variable(tf.zeros(num_filters), dtype=tf.float32, name="b")#Need to initialize this with a nz value
-
-            #tf.layers.batch_normalization(inputs=tf.placeholder(tf.float32,[BATCH_SIZE,height_img,width_img,num_filters]), center=True, scale=False, training=False, trainable=False,name='BN', reuse=False)
+            #tf.layers.batch_normalization(inputs=tf.placeholder(tf.float32,[BATCH_SIZE,height_img,width_img,num_filters],name='IsThisIt'), training=tf.placeholder(tf.bool), name='BN', reuse=False)
 
     with tf.variable_scope("l" + str(n_DnCNN_layers - 1)):
         # Last Layer: filter_height x filter_width conv, num_filters inputs, 1 outputs
@@ -300,63 +299,63 @@ def g_out_phaseless(phat,pvar,y,wvar):
     return g,dg
 
 ## Denoiser wrapper that selects which weights and biases to use
-def DnCNN_outer_wrapper(r,rvar,theta,tie,iter):
+def DnCNN_outer_wrapper(r,rvar,theta,tie,iter,training=False):
     if tie:
         with tf.variable_scope("Iter0"):
-            (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[0], reuse=True)
+            (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[0], training=training)
     elif adaptive_weights:
         rstd = 255. * tf.sqrt(tf.reduce_mean(rvar))  # To enable batch processing, I have to treat every image in the batch as if it has the same amount of effective noise
         def x_nl0(a=rstd,iter=iter,r=r,rvar=rvar,theta=theta):
             with tf.variable_scope("Adaptive_NL" + str(0)):
-                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[0], reuse=True)
+                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[0], training=training)
             xhat = tf.Print(xhat, [iter], "used denoiser 0")
             return (xhat, dxdr)
 
         def x_nl1(a=rstd,iter=iter,r=r,rvar=rvar,theta=theta):
             with tf.variable_scope("Adaptive_NL" + str(1)):
-                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[1], reuse=True)
+                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[1], training=training)
             xhat = tf.Print(xhat, [iter], "used denoiser 1")
             return (xhat, dxdr)
 
         def x_nl2(a=rstd,iter=iter,r=r,rvar=rvar,theta=theta):
             with tf.variable_scope("Adaptive_NL" + str(2)):
-                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[2], reuse=True)
+                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[2], training=training)
             xhat = tf.Print(xhat, [iter], "used denoiser 2")
             return (xhat, dxdr)
 
         def x_nl3(a=rstd,iter=iter,r=r,rvar=rvar,theta=theta):
             with tf.variable_scope("Adaptive_NL" + str(3)):
-                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[3], reuse=True)
+                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[3], training=training)
             xhat = tf.Print(xhat, [iter], "used denoiser 3")
             return (xhat, dxdr)
 
         def x_nl4(a=rstd,iter=iter,r=r,rvar=rvar,theta=theta):
             with tf.variable_scope("Adaptive_NL" + str(4)):
-                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[4], reuse=True)
+                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[4], training=training)
             xhat = tf.Print(xhat, [iter], "used denoiser 4")
             return (xhat, dxdr)
 
         def x_nl5(a=rstd,iter=iter,r=r,rvar=rvar,theta=theta):
             with tf.variable_scope("Adaptive_NL" + str(5)):
-                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[5], reuse=True)
+                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[5], training=training)
             xhat = tf.Print(xhat, [iter], "used denoiser 5")
             return (xhat, dxdr)
 
         def x_nl6(a=rstd,iter=iter,r=r,rvar=rvar,theta=theta):
             with tf.variable_scope("Adaptive_NL" + str(6)):
-                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[6], reuse=True)
+                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[6], training=training)
             xhat = tf.Print(xhat, [iter], "used denoiser 6")
             return (xhat, dxdr)
 
         def x_nl7(a=rstd,iter=iter,r=r,rvar=rvar,theta=theta):
             with tf.variable_scope("Adaptive_NL" + str(7)) as scope:
-                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[7], reuse=True)
+                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[7], training=training)
             xhat = tf.Print(xhat, [iter], "used denoiser 7")
             return (xhat, dxdr)
 
         def x_nl8(a=rstd,iter=iter,r=r,rvar=rvar,theta=theta):
             with tf.variable_scope("Adaptive_NL" + str(8)) as scope:
-                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[8], reuse=True)
+                (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[8], training=training)
             xhat = tf.Print(xhat, [iter], "used denoiser 8")
             return (xhat, dxdr)
 
@@ -375,16 +374,16 @@ def DnCNN_outer_wrapper(r,rvar,theta,tie,iter):
         xhat = tf.reshape(xhat, shape=[n, BATCH_SIZE])
         dxdr = tf.reshape(dxdr, shape=[1, BATCH_SIZE])
     else:
-        with tf.variable_scope("Iter" + str(iter)):  # Ensure correct normalization variables are used at this iteration
-            (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[iter], reuse=True)
+        with tf.variable_scope("Iter" + str(iter)):
+            (xhat, dxdr) = DnCNN_wrapper(r, rvar, theta[iter], training=training)
     return (xhat, dxdr)
 
 ## Denoiser Wrapper that computes divergence
-def DnCNN_wrapper(r,rvar,theta_thislayer,reuse):
+def DnCNN_wrapper(r,rvar,theta_thislayer,training=False):
     """
     Call a black-box denoiser and compute a Monte Carlo estimate of dx/dr
     """
-    xhat=DnCNN(r,rvar,theta_thislayer,reuse=reuse)
+    xhat=DnCNN(r,rvar,theta_thislayer,training=training)
     r_abs = tf.abs(r, name=None)
     epsilon = tf.maximum(.001 * tf.reduce_max(r_abs, axis=0),.00001)
     eta=tf.random_normal(shape=r.get_shape(),dtype=tf.float32)
@@ -392,7 +391,7 @@ def DnCNN_wrapper(r,rvar,theta_thislayer,reuse):
         r_perturbed = r + tf.complex(tf.multiply(eta, epsilon),tf.zeros([n,BATCH_SIZE],dtype=tf.float32))
     else:
         r_perturbed = r + tf.multiply(eta, epsilon)
-    xhat_perturbed=DnCNN(r_perturbed,rvar,theta_thislayer,reuse=True)#Avoid computing gradients wrt this use of theta_thislayer
+    xhat_perturbed=DnCNN(r_perturbed,rvar,theta_thislayer,training=training)#Avoid computing gradients wrt this use of theta_thislayer
     eta_dx=tf.multiply(eta,xhat_perturbed-xhat)#Want element-wise multiplication
     mean_eta_dx=tf.reduce_mean(eta_dx,axis=0)
     dxdrMC=tf.divide(mean_eta_dx,epsilon)
@@ -400,7 +399,8 @@ def DnCNN_wrapper(r,rvar,theta_thislayer,reuse):
     return(xhat,dxdrMC)
 
 ## Create Denoiser Model
-def DnCNN(r,rvar, theta_thislayer,reuse=False,training=False):
+def DnCNN(r,rvar, theta_thislayer,training=False):
+    #Reuse will always be true, thus init_vars_DnCNN must be called within the appropriate namescope before DnCNN can be used
     ##r is n x batch_size, where in this case n would be height_img*width_img*channel_img
     #rvar is unused within DnCNN. It may have been used to select which sets of weights and biases to use.
     weights=theta_thislayer[0]
@@ -425,7 +425,7 @@ def DnCNN(r,rvar, theta_thislayer,reuse=False,training=False):
     for i in range(1,n_DnCNN_layers-1):
         with tf.variable_scope("l" + str(i)):
             conv_out  = tf.nn.conv2d(layers[i-1], weights[i], strides=[1, 1, 1, 1], padding='SAME') #+ biases[i]
-            batch_out = tf.layers.batch_normalization(inputs=conv_out, training=training, name='BN', reuse=reuse)
+            batch_out = tf.layers.batch_normalization(inputs=conv_out, training=training, name='BN', reuse=tf.AUTO_REUSE)
             layers[i] = tf.nn.relu(batch_out)
 
     #############  Last Layer ###############

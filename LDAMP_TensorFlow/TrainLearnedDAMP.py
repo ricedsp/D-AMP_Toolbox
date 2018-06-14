@@ -75,7 +75,7 @@ LayerbyLayer=not FLAGS.train_end_to_end #Train only the last layer of the networ
 if tie_weights==True:
     LayerbyLayer=False
     start_layer = max_n_DAMP_layers
-learning_rates = [0.001, 0.0001, 0.00001]
+learning_rates = [0.001, 0.0001]#, 0.00001]
 EPOCHS = 50
 n_Train_Images=128*1600#128*3000
 n_Val_Images=10000#10000#Must be less than 21504
@@ -108,6 +108,7 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
     LDAMP.ListNetworkParameters()
 
     # tf Graph input
+    training_tf = tf.placeholder(tf.bool, name='training')
     x_true = tf.placeholder(tf.float32, [n, BATCH_SIZE])
 
     ## Initialize the variable theta which stores the weights and biases
@@ -127,9 +128,9 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
 
     ## Construct the reconstruction model
     if alg=='DAMP':
-        (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDAMP(y_measured,A_handle,At_handle,A_val_tf,theta,x_true,tie=tie_weights)
+        (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDAMP(y_measured,A_handle,At_handle,A_val_tf,theta,x_true,tie=tie_weights,training=training_tf)
     elif alg=='DIT':
-        (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDIT(y_measured,A_handle,At_handle,A_val_tf,theta,x_true,tie=tie_weights)
+        (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDIT(y_measured,A_handle,At_handle,A_val_tf,theta,x_true,tie=tie_weights,training=training_tf)
     else:
         raise ValueError('alg was not a supported option')
 
@@ -139,26 +140,29 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
     if LayerbyLayer==True:
         vars_to_train=[]#List of only the variables in the last layer.
         for l in range(0, n_DnCNN_layers):
-            vars_to_train.extend([theta[iter][0][l], theta[iter][1][l]])
-        # for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
-        #     beta_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/beta:0"
-        #     var_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance:0"
-        #     mean_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean:0"
-        #     beta = [v for v in tf.global_variables() if v.name == beta_name][0]
-        #     moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
-        #     moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
-        #     vars_to_train.extend([beta,moving_variance,moving_mean])
+            #vars_to_train.extend([theta[iter][0][l], theta[iter][1][l]])
+            vars_to_train.extend([theta[iter][0][l]])
+        for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, beta, and gamma
+            gamma_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/gamma:0"
+            beta_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/beta:0"
+            var_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance:0"
+            mean_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean:0"
+            gamma = [v for v in tf.global_variables() if v.name == gamma_name][0]
+            beta = [v for v in tf.global_variables() if v.name == beta_name][0]
+            moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
+            moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
+            vars_to_train.extend([gamma,beta,moving_variance,moving_mean])
     else:
         vars_to_train=tf.trainable_variables()
 
     LDAMP.CountParameters()
 
     ## Load and Preprocess Training Data
-    train_images = np.load('./TrainingData/TrainingData_patch'+str(height_img)+'.npy')
+    train_images = np.load('./../../TrainingData/TrainingData_patch'+str(height_img)+'.npy')
     train_images=train_images[range(n_Train_Images),0,:,:]
     assert (len(train_images)>=n_Train_Images), "Requested too much training data"
 
-    val_images = np.load('./TrainingData/ValidationData_patch'+str(height_img)+'.npy')
+    val_images = np.load('./../../TrainingData/ValidationData_patch'+str(height_img)+'.npy')
     val_images=val_images[:,0,:,:]
     assert (len(val_images)>=n_Val_Images), "Requested too much validation data"
 
@@ -167,7 +171,13 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
 
     ## Train the Model
     for learning_rate in learning_rates:
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost, var_list=vars_to_train)
+        #optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost, var_list=vars_to_train)
+
+        optimizer0 = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            # Ensures that we execute the update_ops before performing the train_step. Allows us to update averages w/in BN
+            optimizer = optimizer0.minimize(cost, var_list=vars_to_train)
 
         saver_best = tf.train.Saver()  # defaults to saving all variables
         saver_dict={}
@@ -185,18 +195,21 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
                 saver_initvars_name_chckpt = LDAMP.GenLDAMPFilename(alg, tie_weights, LayerbyLayer) + ".ckpt"
                 for iter in range(n_layers_trained):#Create a dictionary with all the variables except those associated with the optimizer.
                     for l in range(0, n_DnCNN_layers):
-                        saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/w": theta[iter][0][l],
-                                           "Iter" + str(iter) + "/l" + str(l) + "/b": theta[iter][1][l]})
-                    # for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
-                    #     beta_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/beta:0"
-                    #     var_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance:0"
-                    #     mean_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean:0"
-                    #     beta = [v for v in tf.global_variables() if v.name == beta_name][0]
-                    #     moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
-                    #     moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
-                    #     saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/beta": beta})
-                    #     saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance": moving_variance})
-                    #     saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean": moving_mean})
+                        saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/w": theta[iter][0][l]})#,
+                                           #"Iter" + str(iter) + "/l" + str(l) + "/b": theta[iter][1][l]})
+                    for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
+                        gamma_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/gamma:0"
+                        beta_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/beta:0"
+                        var_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance:0"
+                        mean_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean:0"
+                        gamma = [v for v in tf.global_variables() if v.name == gamma_name][0]
+                        beta = [v for v in tf.global_variables() if v.name == beta_name][0]
+                        moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
+                        moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
+                        saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/gamma": gamma})
+                        saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/beta": beta})
+                        saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance": moving_variance})
+                        saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean": moving_mean})
                     saver_initvars = tf.train.Saver(saver_dict)
                     saver_initvars.restore(sess, saver_initvars_name_chckpt)
                     print("Loaded wieghts from %s" % saver_initvars_name_chckpt)
@@ -210,18 +223,21 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
                     for iter in range(
                             n_layers_trained):  # Create a dictionary with all the variables except those associated with the optimizer.
                         for l in range(0, n_DnCNN_layers):
-                            saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/w": theta[iter][0][l],
-                                               "Iter" + str(iter) + "/l" + str(l) + "/b": theta[iter][1][l]})
-                        # for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
-                        #     beta_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/beta:0"
-                        #     var_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance:0"
-                        #     mean_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean:0"
-                        #     beta = [v for v in tf.global_variables() if v.name == beta_name][0]
-                        #     moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
-                        #     moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
-                        #     saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/beta": beta})
-                        #     saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance": moving_variance})
-                        #     saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean": moving_mean})
+                            saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/w": theta[iter][0][l]})#,
+                                               #"Iter" + str(iter) + "/l" + str(l) + "/b": theta[iter][1][l]})
+                        for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
+                            gamma_name = "Iter" + str(iter) + "l" + str(l) + "/BN/gamma:0"
+                            beta_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/beta:0"
+                            var_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance:0"
+                            mean_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean:0"
+                            gamma = [v for v in tf.global_variables() if v.name == gamma_name][0]
+                            beta = [v for v in tf.global_variables() if v.name == beta_name][0]
+                            moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
+                            moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
+                            saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/gamma": gamma})
+                            saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/beta": beta})
+                            saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance": moving_variance})
+                            saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean": moving_mean})
                         saver_initvars = tf.train.Saver(saver_dict)
                         saver_initvars.restore(sess, saver_initvars_name_chckpt)
                 if InitWeightsMethod=='denoiser':
@@ -229,17 +245,20 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
                     saver_initvars_name_chckpt=LDAMP.GenDnCNNFilename(300./255.)+".ckpt"
                     iter = 0
                     for l in range(0, n_DnCNN_layers):
-                        saver_dict.update({"l" + str(l) + "/w": theta[iter][0][l], "l" + str(l) + "/b": theta[iter][1][l]})
-                    # for l in range(1,n_DnCNN_layers-1):#Associate variance, means, and beta
-                    #     beta_name="Iter"+str(iter)+"/l" + str(l) + "/BN/beta:0"
-                    #     var_name="Iter"+str(iter)+"/l" + str(l) + "/BN/moving_variance:0"
-                    #     mean_name="Iter"+str(iter)+"/l" + str(l) + "/BN/moving_mean:0"
-                    #     beta = [v for v in tf.global_variables() if v.name == beta_name][0]
-                    #     moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
-                    #     moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
-                    #     saver_dict.update({"l" + str(l) + "/BN/beta": beta})
-                    #     saver_dict.update({"l" + str(l) + "/BN/moving_variance": moving_variance})
-                    #     saver_dict.update({"l" + str(l) + "/BN/moving_mean": moving_mean})
+                        saver_dict.update({"l" + str(l) + "/w": theta[iter][0][l]})#, "l" + str(l) + "/b": theta[iter][1][l]})
+                    for l in range(1,n_DnCNN_layers-1):#Associate variance, means, and beta
+                        gamma_name = "Iter"+str(iter)+"/l" + str(l) + "/BN/gamma:0"
+                        beta_name="Iter"+str(iter)+"/l" + str(l) + "/BN/beta:0"
+                        var_name="Iter"+str(iter)+"/l" + str(l) + "/BN/moving_variance:0"
+                        mean_name="Iter"+str(iter)+"/l" + str(l) + "/BN/moving_mean:0"
+                        gamma = [v for v in tf.global_variables() if v.name == gamma_name][0]
+                        beta = [v for v in tf.global_variables() if v.name == beta_name][0]
+                        moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
+                        moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
+                        saver_dict.update({"l" + str(l) + "/BN/gamma": gamma})
+                        saver_dict.update({"l" + str(l) + "/BN/beta": beta})
+                        saver_dict.update({"l" + str(l) + "/BN/moving_variance": moving_variance})
+                        saver_dict.update({"l" + str(l) + "/BN/moving_mean": moving_mean})
                     saver_initvars = tf.train.Saver(saver_dict)
                     saver_initvars.restore(sess, saver_initvars_name_chckpt)
                 elif InitWeightsMethod=='smaller_net' and n_DAMP_layers!=1:
@@ -250,17 +269,20 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
                     #Load the first n-1 iterations weights from a previously learned network
                     for iter in range(n_DAMP_layers-1):
                         for l in range(0, n_DnCNN_layers):
-                            saver_dict.update({"Iter"+str(iter)+"/l" + str(l) + "/w": theta[iter][0][l], "Iter"+str(iter)+"/l" + str(l) + "/b": theta[iter][1][l]})
-                        # for l in range(1,n_DnCNN_layers-1):#Associate variance, means, and beta
-                        #     beta_name="Iter"+str(iter)+"/l" + str(l) + "/BN/beta:0"
-                        #     var_name="Iter"+str(iter)+"/l" + str(l) + "/BN/moving_variance:0"
-                        #     mean_name="Iter"+str(iter)+"/l" + str(l) + "/BN/moving_mean:0"
-                        #     beta = [v for v in tf.global_variables() if v.name == beta_name][0]
-                        #     moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
-                        #     moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
-                        #     saver_dict.update({"Iter"+str(iter)+"/l" + str(l) + "/BN/beta": beta})
-                        #     saver_dict.update({"Iter"+str(iter)+"/l" + str(l) + "/BN/moving_variance": moving_variance})
-                        #     saver_dict.update({"Iter"+str(iter)+"/l" + str(l) + "/BN/moving_mean": moving_mean})
+                            saver_dict.update({"Iter"+str(iter)+"/l" + str(l) + "/w": theta[iter][0][l]})#, "Iter"+str(iter)+"/l" + str(l) + "/b": theta[iter][1][l]})
+                        for l in range(1,n_DnCNN_layers-1):#Associate variance, means, and beta
+                            gamma_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/gamma:0"
+                            beta_name="Iter"+str(iter)+"/l" + str(l) + "/BN/beta:0"
+                            var_name="Iter"+str(iter)+"/l" + str(l) + "/BN/moving_variance:0"
+                            mean_name="Iter"+str(iter)+"/l" + str(l) + "/BN/moving_mean:0"
+                            gamma = [v for v in tf.global_variables() if v.name == gamma_name][0]
+                            beta = [v for v in tf.global_variables() if v.name == beta_name][0]
+                            moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
+                            moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
+                            saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/gamma": gamma})
+                            saver_dict.update({"Iter"+str(iter)+"/l" + str(l) + "/BN/beta": beta})
+                            saver_dict.update({"Iter"+str(iter)+"/l" + str(l) + "/BN/moving_variance": moving_variance})
+                            saver_dict.update({"Iter"+str(iter)+"/l" + str(l) + "/BN/moving_mean": moving_mean})
                         saver_initvars = tf.train.Saver(saver_dict)
                         saver_initvars.restore(sess, saver_initvars_name_chckpt)
 
@@ -268,17 +290,20 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
                     iter=n_DAMP_layers-1
                     saver_dict={}
                     for l in range(0, n_DnCNN_layers):
-                        saver_dict.update({"Iter" + str(iter-1) + "/l" + str(l) + "/w": theta[iter][0][l],"Iter" + str(iter-1) + "/l" + str(l) + "/b": theta[iter][1][l]})
-                    # for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
-                    #     beta_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/beta:0"
-                    #     var_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance:0"
-                    #     mean_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean:0"
-                    #     beta = [v for v in tf.global_variables() if v.name == beta_name][0]
-                    #     moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
-                    #     moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
-                    #     saver_dict.update({"Iter"+str(iter-1)+"/l"+ str(l) + "/BN/beta": beta})
-                    #     saver_dict.update({"Iter"+str(iter-1)+"/l"+ str(l) + "/BN/moving_variance": moving_variance})
-                    #     saver_dict.update({"Iter"+str(iter-1)+"/l" + str(l) + "/BN/moving_mean": moving_mean})
+                        saver_dict.update({"Iter" + str(iter-1) + "/l" + str(l) + "/w": theta[iter][0][l]})#,"Iter" + str(iter-1) + "/l" + str(l) + "/b": theta[iter][1][l]})
+                    for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
+                        gamma_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/gamma:0"
+                        beta_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/beta:0"
+                        var_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance:0"
+                        mean_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean:0"
+                        gamma = [v for v in tf.global_variables() if v.name == gamma_name][0]
+                        beta = [v for v in tf.global_variables() if v.name == beta_name][0]
+                        moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
+                        moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
+                        saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/BN/gamma": gamma})
+                        saver_dict.update({"Iter"+str(iter-1)+"/l"+ str(l) + "/BN/beta": beta})
+                        saver_dict.update({"Iter"+str(iter-1)+"/l"+ str(l) + "/BN/moving_variance": moving_variance})
+                        saver_dict.update({"Iter"+str(iter-1)+"/l" + str(l) + "/BN/moving_mean": moving_mean})
                     saver_initvars = tf.train.Saver(saver_dict)
                     saver_initvars.restore(sess, saver_initvars_name_chckpt)
                 else:
@@ -303,7 +328,7 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
                     batch_x_val = x_val[:, rand_inds[offset:end]]
 
                     # Run optimization. This will both generate compressive measurements and then recontruct from them.
-                    loss_val = sess.run(cost, feed_dict={x_true: batch_x_val, A_val_tf:A_val})
+                    loss_val = sess.run(cost, feed_dict={x_true: batch_x_val, A_val_tf:A_val, training_tf:False})
                     val_values.append(loss_val)
                 time_taken = time.time() - start_time
                 print np.mean(val_values)
@@ -331,7 +356,7 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
                         batch_x_train = x_train[:, rand_inds[offset:end]]
 
                         # Run optimization. This will both generate compressive measurements and then recontruct from them.
-                        _, loss_val = sess.run([optimizer,cost], feed_dict={x_true: batch_x_train, A_val_tf:A_val})#Feed dict names should match with the placeholders
+                        _, loss_val = sess.run([optimizer,cost], feed_dict={x_true: batch_x_train, A_val_tf:A_val, training_tf:True})#Feed dict names should match with the placeholders
                         train_values.append(loss_val)
                     time_taken = time.time() - start_time
                     print np.mean(train_values)
@@ -347,7 +372,7 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
                         batch_x_val = x_val[:, rand_inds[offset:end]]
 
                         # Run optimization. This will both generate compressive measurements and then recontruct from them.
-                        loss_val = sess.run(cost, feed_dict={x_true: batch_x_val, A_val_tf: A_val})
+                        loss_val = sess.run(cost, feed_dict={x_true: batch_x_val, A_val_tf: A_val, training_tf:False})
                         val_values.append(loss_val)
                     time_taken = time.time() - start_time
                     print np.mean(val_values)

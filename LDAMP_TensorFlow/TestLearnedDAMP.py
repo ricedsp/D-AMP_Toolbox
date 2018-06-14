@@ -80,9 +80,9 @@ else:
 ## Construct model
 y_measured= LDAMP.GenerateNoisyCSData_handles(x_true, A_handle, sigma_w, A_val_tf)
 if alg == 'DAMP':
-    (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDAMP(y_measured, A_handle, At_handle, A_val_tf, theta,                                                           x_true, tie=tie_weights)
+    (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDAMP(y_measured, A_handle, At_handle, A_val_tf, theta, x_true, tie=tie_weights)
 elif alg == 'DIT':
-    (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDIT(y_measured, A_handle, At_handle, A_val_tf, theta,                                                            x_true, tie=tie_weights)
+    (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDIT(y_measured, A_handle, At_handle, A_val_tf, theta, x_true, tie=tie_weights)
 else:
     raise ValueError('alg was not a supported option')
 
@@ -108,18 +108,20 @@ with tf.Session() as sess:
     if tie_weights == 1: # Load weights from pretrained denoiser
         save_name = LDAMP.GenDnCNNFilename(80. / 255.) + ".ckpt"
         for l in range(0, n_DnCNN_layers):
-            saver_dict.update({"l" + str(l) + "/w": theta[0][0][l], "l" + str(l) + "/b": theta[0][1][l]})
+            saver_dict.update({"l" + str(l) + "/w": theta[0][0][l]})#, "l" + str(l) + "/b": theta[0][1][l]})
         for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
             # saver_dict.update({"l" + str(l) + "/BN/beta": theta[0][2][l]})
             # saver_dict.update({"l" + str(l) + "/BN/moving_variance": theta[0][3][l]})
             # saver_dict.update({"l" + str(l) + "/BN/moving_mean": theta[0][4][l]})
-
+            gamma_name = "Iter" + str(0) + "/l" + str(l) + "/BN/gamma:0"
             beta_name = "Iter" + str(0) + "/l" + str(l) + "/BN/beta:0"
             var_name = "Iter" + str(0) + "/l" + str(l) + "/BN/moving_variance:0"
             mean_name = "Iter" + str(0) + "/l" + str(l) + "/BN/moving_mean:0"
+            gamma = [v for v in tf.global_variables() if v.name == gamma_name][0]
             beta = [v for v in tf.global_variables() if v.name == beta_name][0]
             moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
             moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
+            saver_dict.update({"l" + str(l) + "/BN/gamma": gamma})
             saver_dict.update({"l" + str(l) + "/BN/beta": beta})
             saver_dict.update({"l" + str(l) + "/BN/moving_variance": moving_variance})
             saver_dict.update({"l" + str(l) + "/BN/moving_mean": moving_mean})
@@ -131,15 +133,17 @@ with tf.Session() as sess:
             noise_max_std = noise_max_stds[noise_level]
             save_name = LDAMP.GenDnCNNFilename(noise_min_std/ 255.,noise_max_std/255.) + ".ckpt"
             for l in range(0, n_DnCNN_layers):
-                saver_dict.update(
-                    {"l" + str(l) + "/w": theta[noise_level][0][l], "l" + str(l) + "/b": theta[noise_level][1][l]})
+                saver_dict.update({"l" + str(l) + "/w": theta[noise_level][0][l]})#, "l" + str(l) + "/b": theta[noise_level][1][l]})
             for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
+                gamma_name = "Adaptive_NL"+str(noise_level) + "/l" + str(l) + "/BN/gamma:0"
                 beta_name = "Adaptive_NL"+str(noise_level) + "/l" + str(l) + "/BN/beta:0"
                 var_name = "Adaptive_NL"+str(noise_level) + "/l" + str(l) + "/BN/moving_variance:0"
                 mean_name = "Adaptive_NL"+str(noise_level) + "/l" + str(l) + "/BN/moving_mean:0"
+                gamma = [v for v in tf.global_variables() if v.name == gamma_name][0]
                 beta = [v for v in tf.global_variables() if v.name == beta_name][0]
                 moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
                 moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
+                saver_dict.update({"l" + str(l) + "/BN/gamma": gamma})
                 saver_dict.update({"l" + str(l) + "/BN/beta": beta})
                 saver_dict.update({"l" + str(l) + "/BN/moving_variance": moving_variance})
                 saver_dict.update({"l" + str(l) + "/BN/moving_mean": moving_mean})

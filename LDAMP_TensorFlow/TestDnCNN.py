@@ -16,7 +16,7 @@ channel_img = 1 # RGB -> 3, Grayscale -> 1
 filter_height = 3
 filter_width = 3
 num_filters = 64
-n_DnCNN_layers=17
+n_DnCNN_layers=16
 
 
 ## Training Parameters
@@ -52,15 +52,15 @@ y_measured = LDAMP.AddNoise(x_true,sigma_w)
 theta_dncnn=LDAMP.init_vars_DnCNN(init_mu, init_sigma)
 
 ## Construct the reconstruction model
-x_hat = LDAMP.DnCNN(y_measured,None,theta_dncnn,reuse=False,training=False)
+x_hat = LDAMP.DnCNN(y_measured,None,theta_dncnn,training=False)
 
 LDAMP.CountParameters()
 
 ## Load and Preprocess Test Data
 if height_img>50:
-    test_im_name = "./../../../TrainingData/StandardTestData_" + str(height_img) + "Res.npy"
+    test_im_name = "./../../TrainingData/StandardTestData_" + str(height_img) + "Res.npy"
 else:
-    test_im_name = "./../../../TrainingData/TestData_patch" + str(height_img) + ".npy"
+    test_im_name = "./../../TrainingData/TestData_patch" + str(height_img) + ".npy"
 
 test_images = np.load(test_im_name)
 test_images=test_images[:,0,:,:]
