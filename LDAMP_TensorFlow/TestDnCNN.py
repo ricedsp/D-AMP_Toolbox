@@ -45,11 +45,11 @@ LDAMP.ListNetworkParameters()
 # tf Graph input
 x_true = tf.placeholder(tf.float32, [n, BATCH_SIZE])
 
-## Initialize the variable theta which stores the weights and biases
-theta_dncnn=LDAMP.init_vars_DnCNN(init_mu, init_sigma)
-
 ## Construct the measurement model and handles/placeholders
 y_measured = LDAMP.AddNoise(x_true,sigma_w)
+
+## Initialize the variable theta which stores the weights and biases
+theta_dncnn=LDAMP.init_vars_DnCNN(init_mu, init_sigma)
 
 ## Construct the reconstruction model
 x_hat = LDAMP.DnCNN(y_measured,None,theta_dncnn,reuse=False,training=False)

@@ -91,7 +91,7 @@ theta_dncnn=LDAMP.init_vars_DnCNN(init_mu, init_sigma)
 x_hat = LDAMP.DnCNN(y_measured,None,theta_dncnn,reuse=False,training=training)
 
 ## Define loss and optimizer
-cost = tf.nn.l2_loss(x_true-x_hat) / tf.nn.l2_loss(x_true)
+cost = tf.nn.l2_loss(x_true-x_hat)* 1./ BATCH_SIZE
 
 LDAMP.CountParameters()
 
@@ -110,7 +110,12 @@ x_val = np.transpose(np.reshape(val_images, (-1, channel_img * height_img * widt
 
 ## Train the Model
 for learning_rate in learning_rates:
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)  # Train all the variables
+    optimizer0 = tf.train.AdamOptimizer(learning_rate=learning_rate) # Train all the variables
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_ops):
+        # Ensures that we execute the update_ops before performing the train_step. Allows us to update averages w/in BN
+        optimizer = optimizer0.minimize(cost)
+
 
     saver_best = tf.train.Saver()  # defaults to saving all variables
     saver_dict={}
@@ -124,14 +129,27 @@ for learning_rate in learning_rates:
         start_time = time.time()
         print("Load Initial Weights ...")
         if ResumeTraining or learning_rate!=learning_rates[0]:
-            ##Load previous values for the weights
+            ##Load previous values for the weights and BNs
             saver_initvars_name_chckpt=LDAMP.GenDnCNNFilename(sigma_w_min,sigma_w_max)+ ".ckpt"
             for l in range(0, n_DnCNN_layers):
-                #saver_dict.update({"l" + str(l) + "/w": theta_dncnn[0][l],
-                #                   "l" + str(l) + "/b": theta_dncnn[1][l]})
                 saver_dict.update({"l" + str(l) + "/w": theta_dncnn[0][l]})
+            for l in range(1,n_DnCNN_layers-1):#Associate variance, means, and beta
+                gamma_name = "l" + str(l) + "/BN/gamma:0"
+                beta_name="l" + str(l) + "/BN/beta:0"
+                var_name="l" + str(l) + "/BN/moving_variance:0"
+                mean_name="l" + str(l) + "/BN/moving_mean:0"
+                gamma = [v for v in tf.global_variables() if v.name == gamma_name][0]
+                beta = [v for v in tf.global_variables() if v.name == beta_name][0]
+                moving_variance = [v for v in tf.global_variables() if v.name == var_name][0]
+                moving_mean = [v for v in tf.global_variables() if v.name == mean_name][0]
+                saver_dict.update({"l" + str(l) + "/BN/gamma": gamma})
+                saver_dict.update({"l" + str(l) + "/BN/beta": beta})
+                saver_dict.update({"l" + str(l) + "/BN/moving_variance": moving_variance})
+                saver_dict.update({"l" + str(l) + "/BN/moving_mean": moving_mean})
             saver_initvars = tf.train.Saver(saver_dict)
             saver_initvars.restore(sess, saver_initvars_name_chckpt)
+            # saver_initvars = tf.train.Saver()
+            # saver_initvars.restore(sess, saver_initvars_name_chckpt)
         else:
             pass
         time_taken = time.time() - start_time
@@ -195,8 +213,7 @@ for learning_rate in learning_rates:
                     val_values.append(loss_val)
                 time_taken = time.time() - start_time
                 print np.mean(val_values)
-                #if(np.mean(val_values) < best_val_error):
-                if True:
+                if(np.mean(val_values) < best_val_error):
                     failed_epochs=0
                     best_val_error = np.mean(val_values)
                     best_sess = sess

@@ -417,22 +417,21 @@ def DnCNN(r,rvar, theta_thislayer,reuse=False,training=False):
     #############  First Layer ###############
     # Conv + Relu
     with tf.variable_scope("l0"):
-        conv_out = tf.nn.conv2d(r, weights[0], strides=[1, 1, 1, 1], padding='SAME',data_format='NHWC') #+ biases[0]#NCHW works faster on nvidia hardware, however I only perform this type of conovlution once so performance difference will be negligible
+        conv_out = tf.nn.conv2d(r, weights[0], strides=[1, 1, 1, 1], padding='SAME',data_format='NHWC') #NCHW works faster on nvidia hardware, however I only perform this type of conovlution once so performance difference will be negligible
         layers[0] = tf.nn.relu(conv_out)
 
     #############  2nd to 2nd to Last Layer ###############
     # Conv + BN + Relu
     for i in range(1,n_DnCNN_layers-1):
-        with tf.variable_scope("l" + str(i)):#Added so that batch_normalization/moving_variance, moving_mean, and beta would all be placed in the l1/... l2/... respectively.
-            #To inspect current variable names use vars=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES), and vars[index].name
+        with tf.variable_scope("l" + str(i)):
             conv_out  = tf.nn.conv2d(layers[i-1], weights[i], strides=[1, 1, 1, 1], padding='SAME') #+ biases[i]
-            batch_out = tf.layers.batch_normalization(inputs=conv_out, training=training, name='BN', reuse=reuse)#The documentation says training should be true for training and false for inference. In practice I found setting things this way killed performance
+            batch_out = tf.layers.batch_normalization(inputs=conv_out, training=training, name='BN', reuse=reuse)
             layers[i] = tf.nn.relu(batch_out)
 
     #############  Last Layer ###############
     # Conv
     with tf.variable_scope("l" + str(n_DnCNN_layers - 1)):
-        layers[n_DnCNN_layers-1]  = tf.nn.conv2d(layers[n_DnCNN_layers-2], weights[n_DnCNN_layers-1], strides=[1, 1, 1, 1], padding='SAME') #+ biases[n_DnCNN_layers-1]
+        layers[n_DnCNN_layers-1]  = tf.nn.conv2d(layers[n_DnCNN_layers-2], weights[n_DnCNN_layers-1], strides=[1, 1, 1, 1], padding='SAME')
 
     x_hat = r-layers[n_DnCNN_layers-1]
     x_hat = tf.transpose(tf.reshape(x_hat,orig_Shape))
