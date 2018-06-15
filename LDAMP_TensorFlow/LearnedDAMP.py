@@ -153,7 +153,40 @@ def LDAMP(y,A_handle,At_handle,A_val,theta,x_true,tie,training=False):
         MSE_history.append(MSE_thisiter)
         NMSE_history.append(NMSE_thisiter)
         PSNR_history.append(PSNR_thisiter)
-    return xhat, MSE_history, NMSE_history, PSNR_history
+    return xhat, MSE_history, NMSE_history, PSNR_history, r, rvar, dxdr
+
+#Learned DAMP operating on Aty. Used for calculating MCSURE loss
+def LDAMP_Aty(Aty,A_handle,At_handle,A_val,theta,x_true,tie,training=False):
+    Atz=Aty
+    xhat = tf.zeros([n, BATCH_SIZE], dtype=tf.float32)
+    MSE_history=[]#Will be a list of n_DAMP_layers+1 lists, each sublist will be of size BATCH_SIZE
+    NMSE_history=[]
+    PSNR_history=[]
+    (MSE_thisiter, NMSE_thisiter, PSNR_thisiter)=EvalError(xhat,x_true)
+    MSE_history.append(MSE_thisiter)
+    NMSE_history.append(NMSE_thisiter)
+    PSNR_history.append(PSNR_thisiter)
+    for iter in range(n_DAMP_layers):
+        if is_complex:
+            r = tf.complex(xhat, tf.zeros([n, BATCH_SIZE], dtype=tf.float32)) + Atz
+            rvar = (1. / n_fp * tf.reduce_sum(tf.square(tf.abs(Atz)), axis=0))
+            # rvar = (1. / m_fp * tf.reduce_sum(tf.square(tf.abs(z)),axis=0))#In the latest version of TF, abs can handle complex values
+        else:
+            r = xhat + Atz
+            rvar = (1. / n_fp * tf.reduce_sum(tf.square(tf.abs(Atz)), axis=0))
+            # rvar = (1. / m_fp * tf.reduce_sum(tf.square(tf.abs(z)),axis=0))
+        (xhat,dxdr)=DnCNN_outer_wrapper(r, rvar,theta,tie,iter,training=training)
+        if is_complex:
+            # z = y - A_handle(A_val, xhat) + n_fp / m_fp * tf.complex(dxdr,0.) * z
+            Atz = Aty - At_handle(A_val, A_handle(A_val, xhat)) + n_fp / m_fp * tf.complex(dxdr,0.) * Atz
+        else:
+            # z = y - A_handle(A_val, xhat) + n_fp / m_fp * dxdr * z
+            Atz = Aty - At_handle(A_val, A_handle(A_val, xhat)) +  n_fp / m_fp * dxdr * Atz
+        (MSE_thisiter, NMSE_thisiter, PSNR_thisiter) = EvalError(xhat, x_true)
+        MSE_history.append(MSE_thisiter)
+        NMSE_history.append(NMSE_thisiter)
+        PSNR_history.append(PSNR_thisiter)
+    return xhat, MSE_history, NMSE_history, PSNR_history, r, rvar, dxdr
 
 #Learned DIT
 def LDIT(y,A_handle,At_handle,A_val,theta,x_true,tie,training=False):
@@ -395,7 +428,7 @@ def DnCNN_wrapper(r,rvar,theta_thislayer,training=False):
     eta_dx=tf.multiply(eta,xhat_perturbed-xhat)#Want element-wise multiplication
     mean_eta_dx=tf.reduce_mean(eta_dx,axis=0)
     dxdrMC=tf.divide(mean_eta_dx,epsilon)
-    dxdrMC=tf.stop_gradient(dxdrMC)#With long networks propagating wrt the MC estimates caused divergence
+    #dxdrMC=tf.stop_gradient(dxdrMC)#With long networks propagating wrt the MC estimates caused divergence
     return(xhat,dxdrMC)
 
 ## Create Denoiser Model
@@ -456,6 +489,7 @@ def AddNoise(clean,sigma):
     else:
         noise_vec=sigma*tf.random_normal(shape=clean.shape,dtype=tf.float32)
     noisy=clean+noise_vec
+    noisy=tf.reshape(noisy,clean.shape)
     return noisy
 
 ## Create training data from images, with numpy
@@ -472,7 +506,7 @@ def AddNoise_np(clean,sigma):
     return noisy
 
 ##Create a string that generates filenames. Ensures consitency between functions
-def GenLDAMPFilename(alg,tie_weights,LayerbyLayer,n_DAMP_layer_override=None,sampling_rate_override=None):
+def GenLDAMPFilename(alg,tie_weights,LayerbyLayer,n_DAMP_layer_override=None,sampling_rate_override=None,loss_func='MSE'):
     if n_DAMP_layer_override:
         n_DAMP_layers_save=n_DAMP_layer_override
     else:
@@ -481,12 +515,21 @@ def GenLDAMPFilename(alg,tie_weights,LayerbyLayer,n_DAMP_layer_override=None,sam
         sampling_rate_save=sampling_rate_override
     else:
         sampling_rate_save=sampling_rate
-    filename = "./saved_models/LDAMP/"+alg+"_" + str(n_DnCNN_layers) + "DnCNNL_" + str(int(n_DAMP_layers_save)) + "DAMPL_Tie"+str(tie_weights)+"_LbyL"+str(LayerbyLayer)+"_SR" +str(int(sampling_rate_save*100))
+    if loss_func=='SURE':
+        filename = "./saved_models/LDAMP/SURE_"+alg+"_" + str(n_DnCNN_layers) + "DnCNNL_" + str(int(n_DAMP_layers_save)) + "DAMPL_Tie"+str(tie_weights)+"_LbyL"+str(LayerbyLayer)+"_SR" +str(int(sampling_rate_save*100))
+    elif loss_func=='GSURE':
+        filename = "./saved_models/LDAMP/GSURE_"+alg+"_" + str(n_DnCNN_layers) + "DnCNNL_" + str(int(n_DAMP_layers_save)) + "DAMPL_Tie"+str(tie_weights)+"_LbyL"+str(LayerbyLayer)+"_SR" +str(int(sampling_rate_save*100))
+    else:
+        filename = "./saved_models/LDAMP/"+alg+"_" + str(n_DnCNN_layers) + "DnCNNL_" + str(int(n_DAMP_layers_save)) + "DAMPL_Tie"+str(tie_weights)+"_LbyL"+str(LayerbyLayer)+"_SR" +str(int(sampling_rate_save*100))
     return filename
 
 ##Create a string that generates filenames. Ensures consitency between functions
-def GenDnCNNFilename(sigma_w_min,sigma_w_max):
-    filename="./saved_models/DnCNN/DnCNN_" + str(n_DnCNN_layers) + "L_sigmaMin" + str(int(255.*sigma_w_min))+"_sigmaMax" + str(int(255.*sigma_w_max))
+def GenDnCNNFilename(sigma_w_min,sigma_w_max,useSURE=False):
+    if useSURE:
+        filename = "./saved_models/DnCNN/SURE_DnCNN_" + str(n_DnCNN_layers) + "L_sigmaMin" + str(
+            int(255. * sigma_w_min)) + "_sigmaMax" + str(int(255. * sigma_w_max))
+    else:
+        filename="./saved_models/DnCNN/DnCNN_" + str(n_DnCNN_layers) + "L_sigmaMin" + str(int(255.*sigma_w_min))+"_sigmaMax" + str(int(255.*sigma_w_max))
     return filename
 
 ## Count the total number of learnable parameters
@@ -500,3 +543,19 @@ def CountParameters():
         total_parameters += variable_parameters
     print('Total number of parameters: ')
     print(total_parameters)
+
+## Calculate Monte Carlo SURE Loss
+def MCSURE_loss(x_hat,div_overN,y,sigma_w):
+    return tf.reduce_sum(tf.reduce_sum((y - x_hat) ** 2, axis=0) / n_fp -  sigma_w ** 2 + 2. * sigma_w ** 2 * div_overN)
+
+## Calculate Monte Carlo Generalized SURE Loss (||Px||^2 term ignored below)
+def MCGSURE_loss(x_hat,x_ML,P,MCdiv,sigma_w):
+    Pxhatnorm2 = tf.reduce_sum(tf.abs(tf.matmul(P, x_hat)) ** 2, axis=0)
+    temp0 = tf.multiply(x_hat, x_ML)
+    x_hatt_xML = tf.reduce_sum(temp0, axis=0)  # x_hat^t*(A^\dagger y)
+    return tf.reduce_sum(Pxhatnorm2+2.*sigma_w**2*MCdiv-2.*x_hatt_xML)
+
+## Calculate Monte Carlo Generalized SURE Loss, ||Px||^2 explicitly added so that estimate tracks MSE
+def MCGSURE_loss_oracle(x_hat,x_ML,P,MCdiv,sigma_w,x_true):
+    Pxtruenorm2 = tf.reduce_sum(tf.abs(tf.matmul(P, x_true)) ** 2, axis=0)
+    return tf.reduce_sum(Pxtruenorm2)+MCGSURE_loss(x_hat,x_ML,P,MCdiv,sigma_w)

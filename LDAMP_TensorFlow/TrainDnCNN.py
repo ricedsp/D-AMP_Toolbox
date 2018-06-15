@@ -32,6 +32,11 @@ parser.add_argument(
     type=float,
     default=25.,
     help="Highest noise level used to train network")
+parser.add_argument(
+    "--loss_func",
+    type=str,
+    default="MSE",#Options are SURE or MSE
+    help="Which loss function to use")
 FLAGS, unparsed = parser.parse_known_args()
 
 print(FLAGS)
@@ -54,6 +59,11 @@ EPOCHS = 50
 n_Train_Images=128*1600#3000
 n_Val_Images=10000#Must be less than 21504
 BATCH_SIZE = 128
+loss_func=FLAGS.loss_func
+if loss_func=='SURE':
+    useSURE=True
+else:
+    useSURE=False
 
 ## Problem Parameters
 sigma_w_min=FLAGS.sigma_w_min/255.#Noise std
@@ -88,10 +98,16 @@ y_measured = LDAMP.AddNoise(x_true,sigma_w_tf)
 theta_dncnn=LDAMP.init_vars_DnCNN(init_mu, init_sigma)
 
 ## Construct the reconstruction model
-x_hat = LDAMP.DnCNN(y_measured,None,theta_dncnn,training=training_tf)
+#x_hat = LDAMP.DnCNN(y_measured,None,theta_dncnn,training=training_tf)
+[x_hat, div_overN] = LDAMP.DnCNN_wrapper(y_measured,None,theta_dncnn,training=training_tf)
 
 ## Define loss and optimizer
-cost = tf.nn.l2_loss(x_true-x_hat)* 1./ BATCH_SIZE
+
+nfp=np.float32(height_img*width_img)
+if useSURE:
+    cost = LDAMP.MCSURE_loss(x_hat,div_overN,y_measured,sigma_w_tf)
+else:
+    cost = tf.nn.l2_loss(x_true-x_hat)* 1./ nfp
 
 LDAMP.CountParameters()
 
@@ -130,7 +146,7 @@ for learning_rate in learning_rates:
         print("Load Initial Weights ...")
         if ResumeTraining or learning_rate!=learning_rates[0]:
             ##Load previous values for the weights and BNs
-            saver_initvars_name_chckpt=LDAMP.GenDnCNNFilename(sigma_w_min,sigma_w_max)+ ".ckpt"
+            saver_initvars_name_chckpt=LDAMP.GenDnCNNFilename(sigma_w_min,sigma_w_max,useSURE=useSURE)+ ".ckpt"
             for l in range(0, n_DnCNN_layers):
                 saver_dict.update({"l" + str(l) + "/w": theta_dncnn[0][l]})
             for l in range(1,n_DnCNN_layers-1):#Associate variance, means, and beta
@@ -157,7 +173,7 @@ for learning_rate in learning_rates:
         print("Training ...")
         print()
         if __name__ == '__main__':
-            save_name = LDAMP.GenDnCNNFilename(sigma_w_min,sigma_w_max)
+            save_name = LDAMP.GenDnCNNFilename(sigma_w_min,sigma_w_max,useSURE=useSURE)
             save_name_chckpt = save_name + ".ckpt"
             val_values = []
             print("Initial Weights Validation Value:")

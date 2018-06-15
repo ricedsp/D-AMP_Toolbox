@@ -18,8 +18,9 @@ channel_img = 1 # RGB -> 3, Grayscale -> 1
 filter_height = 3
 filter_width = 3
 num_filters = 64
-n_DnCNN_layers=16
-n_DAMP_layers=10
+n_DnCNN_layers=5
+n_DAMP_layers=1
+TrainLoss='MSE'
 
 ## Training parameters (Selects which weights to use)
 LayerbyLayer=True
@@ -80,7 +81,7 @@ else:
 ## Construct model
 y_measured= LDAMP.GenerateNoisyCSData_handles(x_true, A_handle, sigma_w, A_val_tf)
 if alg == 'DAMP':
-    (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDAMP(y_measured, A_handle, At_handle, A_val_tf, theta, x_true, tie=tie_weights)
+    (x_hat, MSE_history, NMSE_history, PSNR_history, r, rvar, dxdr) = LDAMP.LDAMP(y_measured, A_handle, At_handle, A_val_tf, theta, x_true, tie=tie_weights)
 elif alg == 'DIT':
     (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDIT(y_measured, A_handle, At_handle, A_val_tf, theta, x_true, tie=tie_weights)
 else:
@@ -151,7 +152,7 @@ with tf.Session() as sess:
             saver_initvars.restore(sess, save_name)
     else:
         #save_name = LDAMP.GenLDAMPFilename(alg, tie_weights, LayerbyLayer) + ".ckpt"
-        save_name = LDAMP.GenLDAMPFilename(alg, tie_weights, LayerbyLayer,sampling_rate_override=sampling_rate_train) + ".ckpt"
+        save_name = LDAMP.GenLDAMPFilename(alg, tie_weights, LayerbyLayer,sampling_rate_override=sampling_rate_train,loss_func=TrainLoss) + ".ckpt"
         saver.restore(sess, save_name)
 
     print("Reconstructing Signal")

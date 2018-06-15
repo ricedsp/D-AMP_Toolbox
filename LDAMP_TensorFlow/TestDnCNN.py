@@ -17,6 +17,7 @@ filter_height = 3
 filter_width = 3
 num_filters = 64
 n_DnCNN_layers=16
+useSURE=True
 
 
 ## Training Parameters
@@ -104,7 +105,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
     sigma_w_min=25.
     sigma_w_max=25.
 
-    save_name = LDAMP.GenDnCNNFilename(sigma_w_min/255.,sigma_w_max/255.)
+    save_name = LDAMP.GenDnCNNFilename(sigma_w_min/255.,sigma_w_max/255.,useSURE=useSURE)
     save_name_chckpt = save_name + ".ckpt"
     saver.restore(sess, save_name_chckpt)
 
