@@ -16,7 +16,11 @@ Reference #4          : "Learned D-AMP: Principled Neural-Network-based Compress
 Authors               : Christopher A. Metzler, Ali Mousavi, Richard G. Baraniuk
 Download              : https://arxiv.org/abs/1704.06625
 
-Questions/suggestions/comments: chris.metzler@rice.edu (D-AMP, D-prGAMP, & LDAMP) or schniter.1@osu.edu (D-VAMP)
+Reference #5          : "Unsupervised Learning with Stein's Unbiased Risk Estimator" 
+Authors               : Christopher A. Metzler, Ali Mousavi, Reinhard Heckel, Richard G. Baraniuk
+Download              : https://arxiv.org/abs/1805.10531
+
+Questions/suggestions/comments: chris.metzler@rice.edu (D-AMP, D-prGAMP, LDAMP, and SURE) or schniter.1@osu.edu (D-VAMP)
 
 Primary Contents
 ---------------------------------------------------------------------------
@@ -56,9 +60,9 @@ Other files:
 LDAMP_TensorFlow Contents
 ---------------------------------------------------------------------------
 Code:
-    TrainLearnedDAMP.py: Code to train the LDAMP or LDIT networks. Supports layer-by-layer and end-to-end training.
+    TrainLearnedDAMP.py: Code to train the LDAMP or LDIT networks. Supports layer-by-layer and end-to-end training. Supports training with SURE loss.
     TestLearnedDAMP.py: Code to test the LDAMP or LDIT networks. Supports layer-by-layer end-to-end, and denoiser-by-denoiser trained networks.
-    TrainDnCNN.py: Code to train a TensorFlow implementation of DnCNN.
+    TrainDnCNN.py: Code to train a TensorFlow implementation of DnCNN. Supports training with SURE and GSURE loss.
     TestLearnedDAMP.py: Code to test a TensorFlow implementation of DnCNN.
     LearnedDAMP.py: Module that contains the implementations of and support functions for LDAMP, LDIT, and DnCNN.
     Training_Script.sh: Bash script to train LDAMP, LDIT, and DnCNN networks.
@@ -79,13 +83,13 @@ The latest versions of these packages can be found at:
 
 Dependencies
 ---------------------------------------------------------------------------
-The TensorFlow LDAMP/LDIT demos require that models and training data be downloaded form https://rice.box.com/s/n5uz3jxup375d1hg0p6yux3jsl6a4thq. Place the models and data in D-AMP_Toolbox/LDAMP_TensorFlow/saved_models/ and D-AMP_Toolbox/LDAMP_TensorFlow/TrainingData/ respectively.
+The TensorFlow LDAMP/LDIT demos require that models and training data be downloaded form https://rice.app.box.com/v/LDAMP-LargeFiles. Place the models and data in D-AMP_Toolbox/LDAMP_TensorFlow/saved_models/ and D-AMP_Toolbox/LDAMP_TensorFlow/TrainingData/ respectively.
 The Matlab LDAMP/LDVAMP demos ('DnCNN-AMP') require that you have Matconvnet (http://www.vlfeat.org/matconvnet/) compiled and on your path.
 VAMP demos require that you have the latest version of the GAMPmatlab toolbox downloaded via the SVN interface (svn co svn://svn.code.sf.net/p/gampmatlab/code/ GAMPmatlab) and that you have GAMPmatlab/main and GAMPmatlab/VAMP on your path.
 
 Installation
 ---------------------------------------------------------------------------
-The LDAMP_TensorFlow code were created and tested using TensorFlow 1.0 and Python 2.7
+The LDAMP_TensorFlow code were created and tested using TensorFlow 1.7 and Python 2.7
 The Non-local Means and Rice Wavelet Toolbox code need to be compiled before they can be used:
 -Compile the NLM utilities by typing "mex image2vectors_double.c", "mex image2vectors_single.c", "mex vectors_nlmeans_double.c", and "mex vectors_nlmeans_single.c" from the Packages/NLM/ directory. 
 -Compile the Rice Wavelet Toolbox (RWT) by entering "compile" from the Packages/rwt/bin/ directory. Currently the RWT does not compile under Windows 64 bit Matlab.
