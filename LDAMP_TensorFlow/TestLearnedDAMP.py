@@ -18,8 +18,8 @@ channel_img = 1 # RGB -> 3, Grayscale -> 1
 filter_height = 3
 filter_width = 3
 num_filters = 64
-n_DnCNN_layers=5
-n_DAMP_layers=1
+n_DnCNN_layers=16
+n_DAMP_layers=10
 TrainLoss='MSE'
 
 ## Training parameters (Selects which weights to use)
@@ -36,7 +36,7 @@ sampling_rate_train=.2#The sampling rate that was used for training
 sigma_w=0.
 n=channel_img*height_img*width_img
 m=int(np.round(sampling_rate_test*n))
-measurement_mode='coded-diffraction'#'gaussian'#'complex-gaussian'#
+measurement_mode='Fast-JL'#'coded-diffraction'#'gaussian'#'complex-gaussian'#
 
 # Parameters to to initalize weights. Won't be used if old weights are loaded
 init_mu = 0
@@ -111,9 +111,6 @@ with tf.Session() as sess:
         for l in range(0, n_DnCNN_layers):
             saver_dict.update({"l" + str(l) + "/w": theta[0][0][l]})#, "l" + str(l) + "/b": theta[0][1][l]})
         for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
-            # saver_dict.update({"l" + str(l) + "/BN/beta": theta[0][2][l]})
-            # saver_dict.update({"l" + str(l) + "/BN/moving_variance": theta[0][3][l]})
-            # saver_dict.update({"l" + str(l) + "/BN/moving_mean": theta[0][4][l]})
             gamma_name = "Iter" + str(0) + "/l" + str(l) + "/BN/gamma:0"
             beta_name = "Iter" + str(0) + "/l" + str(l) + "/BN/beta:0"
             var_name = "Iter" + str(0) + "/l" + str(l) + "/BN/moving_variance:0"

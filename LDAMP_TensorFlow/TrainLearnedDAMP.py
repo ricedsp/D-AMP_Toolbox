@@ -26,11 +26,13 @@ parser.add_argument(
     "--init_method",
     type=str,
     default="smaller_net",#Options are random, denoiser, smaller net, and layer_by_layer.
-    help="Which algorithm to use")
+    #default='layer_by_layer',
+    help="Which method to use for init")
 parser.add_argument(
     "--start_layer",
     type=int,
     default=1,
+    #default=5,
     help="Which layer(s) to start training")
 parser.add_argument(
     "--train_end_to_end",
@@ -38,11 +40,12 @@ parser.add_argument(
     nargs="?",
     const=True,
     default=False,
+    #default=True,
     help="Train end-to-end instead of layer-by-layer")
 parser.add_argument(
     "--DnCNN_layers",
     type=int,
-    default=5,
+    default=16,
     help="How many DnCNN layers to use within each AMP layer")
 parser.add_argument(
     "--tie_weights",
@@ -54,7 +57,7 @@ parser.add_argument(
 parser.add_argument(
     "--loss_func",
     type=str,
-    default="GSURE",#Options are SURE, GSURE, or MSE
+    default="MSE",#Options are SURE, GSURE, or MSE
     help="Which loss function to use")
 FLAGS, unparsed = parser.parse_known_args()
 
@@ -74,7 +77,7 @@ max_n_DAMP_layers=10#Unless FLAGS.start_layer is set to this value or LayerbyLay
 
 ## Training Parameters
 start_layer=FLAGS.start_layer
-max_Epoch_Fails=1#How many training epochs to run without improvement in the validation error
+max_Epoch_Fails=3#How many training epochs to run without improvement in the validation error
 ResumeTraining=False#Load weights from a network you've already trained a little
 LayerbyLayer=not FLAGS.train_end_to_end #Train only the last layer of the network
 if tie_weights==True:
@@ -87,7 +90,7 @@ n_Val_Images=10000#10000#Must be less than 21504
 BATCH_SIZE = 128
 InitWeightsMethod=FLAGS.init_method
 if LayerbyLayer==False:
-    BATCH_SIZE = 32
+    BATCH_SIZE = 16
 loss_func = FLAGS.loss_func
 
 ## Problem Parameters
@@ -134,9 +137,9 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
 
     ## Construct the reconstruction model
     if alg=='DAMP':
-        (x_hat, MSE_history, NMSE_history, PSNR_history, r_final, rvar_final, div_overN) = LDAMP.LDAMP(y_measured,A_handle,At_handle,A_val_tf,theta,x_true,tie=tie_weights,training=training_tf)
+        (x_hat, MSE_history, NMSE_history, PSNR_history, r_final, rvar_final, div_overN) = LDAMP.LDAMP(y_measured,A_handle,At_handle,A_val_tf,theta,x_true,tie=tie_weights,training=training_tf,LayerbyLayer=LayerbyLayer)
     elif alg=='DIT':
-        (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDIT(y_measured,A_handle,At_handle,A_val_tf,theta,x_true,tie=tie_weights,training=training_tf)
+        (x_hat, MSE_history, NMSE_history, PSNR_history) = LDAMP.LDIT(y_measured,A_handle,At_handle,A_val_tf,theta,x_true,tie=tie_weights,training=training_tf,LayerbyLayer=LayerbyLayer)
     else:
         raise ValueError('alg was not a supported option')
 
@@ -154,7 +157,7 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
         #Treat LDAMP/LDIT as a function of A^ty to calculate the divergence
         Aty_tf=At_handle(A_val_tf,y_measured)
         #Overwrite existing x_hat def
-        (x_hat, _, _, _, _, _, _) = LDAMP.LDAMP_Aty(Aty_tf, A_handle,At_handle,A_val_tf, theta, x_true,tie=tie_weights,training=training_tf)
+        (x_hat, _, _, _, _, _, _) = LDAMP.LDAMP_Aty(Aty_tf, A_handle,At_handle,A_val_tf, theta, x_true,tie=tie_weights,training=training_tf,LayerbyLayer=LayerbyLayer)
         if sigma_w==0.:#Not sure if TF is smart enough to avoid computing MCdiv when it doesn't have to
             MCdiv=0.
         else:
@@ -163,7 +166,7 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
             eta = tf.random_normal(shape=Aty_tf.get_shape(), dtype=tf.float32)
             Aty_perturbed_tf=Aty_tf+tf.multiply(eta, epsilon)
             (x_hat_perturbed, _, _, _, _, _, _) = LDAMP.LDAMP_Aty(Aty_perturbed_tf, A_handle, At_handle, A_val_tf, theta, x_true,
-                                                        tie=tie_weights,training=training_tf)
+                                                        tie=tie_weights,training=training_tf,LayerbyLayer=LayerbyLayer)
             Px_hat_perturbed=tf.matmul(P,x_hat_perturbed)
             Px_hat=tf.matmul(P,x_hat)
             eta_dx = tf.multiply(eta, Px_hat_perturbed - Px_hat)
@@ -265,7 +268,7 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
                             saver_dict.update({"Iter" + str(iter) + "/l" + str(l) + "/w": theta[iter][0][l]})#,
                                                #"Iter" + str(iter) + "/l" + str(l) + "/b": theta[iter][1][l]})
                         for l in range(1, n_DnCNN_layers - 1):  # Associate variance, means, and beta
-                            gamma_name = "Iter" + str(iter) + "l" + str(l) + "/BN/gamma:0"
+                            gamma_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/gamma:0"
                             beta_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/beta:0"
                             var_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_variance:0"
                             mean_name = "Iter" + str(iter) + "/l" + str(l) + "/BN/moving_mean:0"
