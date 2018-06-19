@@ -200,11 +200,11 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
     LDAMP.CountParameters()
 
     ## Load and Preprocess Training Data
-    train_images = np.load('./../../TrainingData/TrainingData_patch'+str(height_img)+'.npy')
+    train_images = np.load('./TrainingData/TrainingData_patch'+str(height_img)+'.npy')
     train_images=train_images[range(n_Train_Images),0,:,:]
     assert (len(train_images)>=n_Train_Images), "Requested too much training data"
 
-    val_images = np.load('./../../TrainingData/ValidationData_patch'+str(height_img)+'.npy')
+    val_images = np.load('./TrainingData/ValidationData_patch'+str(height_img)+'.npy')
     val_images=val_images[:,0,:,:]
     assert (len(val_images)>=n_Val_Images), "Requested too much validation data"
 

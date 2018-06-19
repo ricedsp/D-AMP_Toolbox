@@ -59,9 +59,9 @@ LDAMP.CountParameters()
 
 ## Load and Preprocess Test Data
 if height_img>50:
-    test_im_name = "./../../TrainingData/StandardTestData_" + str(height_img) + "Res.npy"
+    test_im_name = "./TrainingData/StandardTestData_" + str(height_img) + "Res.npy"
 else:
-    test_im_name = "./../../TrainingData/TestData_patch" + str(height_img) + ".npy"
+    test_im_name = "./TrainingData/TestData_patch" + str(height_img) + ".npy"
 
 test_images = np.load(test_im_name)
 test_images=test_images[:,0,:,:]
@@ -102,8 +102,8 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
     # else:
     #     sigma_w_min = 300.
     #     sigma_w_max = 500.
-    sigma_w_min=25.
-    sigma_w_max=25.
+    sigma_w_min=sigma_w*255.
+    sigma_w_max=sigma_w*255.
 
     save_name = LDAMP.GenDnCNNFilename(sigma_w_min/255.,sigma_w_max/255.,useSURE=useSURE)
     save_name_chckpt = save_name + ".ckpt"
