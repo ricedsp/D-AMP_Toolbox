@@ -144,6 +144,7 @@ def GenerateMeasurementOperators(mode):
     return [A_handle, At_handle, A_val, A_val_tf]
 def mydct(x,type=2,norm='ortho'):
     assert type==2 and norm=='ortho', 'Currently only type-II orthonormalized DCTs are supported'
+    assert BATCH_SIZE == 1, 'Fast-JL measurement matrices currently only support batch sizes of one'
     #https://antimatter15.com/2015/05/cooley-tukey-fft-dct-idct-in-under-1k-of-javascript/
     y=tf.concat([x,tf.zeros([1,n],tf.float32)],axis=1)
     Y=tf.fft(tf.complex(y,tf.zeros([1,2*n],tf.float32)))
@@ -154,6 +155,7 @@ def mydct(x,type=2,norm='ortho'):
     # return tf.spectral.dct(x,type=2,norm='ortho')
 def myidct(X,type=2,norm='ortho'):
     assert type==2 and norm=='ortho', 'Currently only type-II orthonormalized DCTs are supported'
+    assert BATCH_SIZE==1, 'Fast-JL measurement matrices currently only support batch sizes of one'
     #https://antimatter15.com/2015/05/cooley-tukey-fft-dct-idct-in-under-1k-of-javascript/
     temp0=tf.reverse(X,[-1])
     temp1=tf.manip.roll(temp0,shift=1,axis=1)
@@ -172,6 +174,7 @@ def myidct(X,type=2,norm='ortho'):
     return tf.real(x)*tf.sqrt(n_fp)
 def mydct_np(x,type=2,norm='ortho'):
     assert type==2 and norm=='ortho', 'Currently only type-II orthonormalized DCTs are supported'
+    assert BATCH_SIZE == 1, 'Fast-JL measurement matrices currently only support batch sizes of one'
     #https://antimatter15.com/2015/05/cooley-tukey-fft-dct-idct-in-under-1k-of-javascript/
     N=len(x)
     y=np.zeros(2*N)
@@ -182,6 +185,7 @@ def mydct_np(x,type=2,norm='ortho'):
     return Y.real
 def myidct_np(X,type=2,norm='ortho'):
     assert type==2 and norm=='ortho', 'Currently only type-II orthonormalized DCTs are supported'
+    assert BATCH_SIZE == 1, 'Fast-JL measurement matrices currently only support batch sizes of one'
     #https://antimatter15.com/2015/05/cooley-tukey-fft-dct-idct-in-under-1k-of-javascript/
     N=len(X)
     Z=X-1j*np.append([0.],np.flip(X,0)[:N-1])

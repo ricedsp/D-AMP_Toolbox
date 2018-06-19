@@ -17,7 +17,7 @@ filter_height = 3
 filter_width = 3
 num_filters = 64
 n_DnCNN_layers=16
-useSURE=True
+useSURE=False#Use the network trained with ground-truth data or with SURE
 
 
 ## Training Parameters
