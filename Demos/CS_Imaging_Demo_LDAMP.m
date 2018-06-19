@@ -1,8 +1,8 @@
 %Demonstrates compressively sampling and LD(V)AMP recovery of an image.
 %Requires  matconvnet and gampmatlab in the path
 addpath(genpath('..'));
-% addpath(genpath('~/gampmatlab'));
-% addpath('~/matconvnet/matlab');
+addpath(genpath('~/gampmatlab'));
+addpath('~/matconvnet/matlab');
 
 %Parameters
 denoiser1='DnCNN';%Available options are NLM, Gauss, Bilateral, BLS-GSM, BM3D, fast-BM3D, BM3D-SAPCA, and DnCNN
@@ -43,17 +43,39 @@ errfxn = @(x_hat) PSNR(x_0,reshape(x_hat,[height width]));
 % Ut= @(x) x(:);
 % d=ones(m,1)*n/m;
 
-%Generate Real-valued Measurement Matrix with Fast Transformation and
-%approximately i.i.d. Gaussian distribution
+% %Generate Real-valued Measurement Matrix with Fast Transformation and
+% %approximately i.i.d. Gaussian distribution
+% signvec = 2*round(rand(n,1))-1;
+% inds=[1;randsample(n-1,m-1)+1];
+% I=speye(n);
+% SubsampM=I(inds,:);
+% M=@(x) SubsampM*reshape(dct2(reshape(bsxfun(@times,signvec,x(:)),[height,width])),[n,1])*sqrt(n/m);
+% Mt=@(x) bsxfun(@times,conj(signvec),reshape(idct2(reshape(SubsampM'*x(:),[height,width])),[n,1]))*sqrt(n/m);
+% U=@(x) x(:);
+% Ut= @(x) x(:);
+% d=ones(m,1)*n/m;
+
+%Generate (something close to) a Fast JL Transform matrix
 signvec = 2*round(rand(n,1))-1;
 inds=[1;randsample(n-1,m-1)+1];
 I=speye(n);
 SubsampM=I(inds,:);
-M=@(x) SubsampM*reshape(dct2(reshape(bsxfun(@times,signvec,x(:)),[height,width])),[n,1])*sqrt(n/m);
-Mt=@(x) bsxfun(@times,conj(signvec),reshape(idct2(reshape(SubsampM'*x(:),[height,width])),[n,1]))*sqrt(n/m);
+M=@(x) SubsampM*reshape(dct(bsxfun(@times,signvec,x(:))),[n,1])*sqrt(n/m);
+Mt=@(x) bsxfun(@times,conj(signvec),reshape(idct(SubsampM'*x(:)),[n,1]))*sqrt(n/m);
 U=@(x) x(:);
 Ut= @(x) x(:);
 d=ones(m,1)*n/m;
+
+% %Generate (something close to) a Fast JL Transform matrix
+% signvec = 2*round(rand(n,1))-1;
+% inds=[1;randsample(n-1,m-1)+1];
+% I=speye(n);
+% SubsampM=I(inds,:);
+% M=@(x) SubsampM*reshape(fwht(bsxfun(@times,signvec,x(:))),[n,1])*n/sqrt(m);
+% Mt=@(x) bsxfun(@times,conj(signvec),reshape(ifwht(SubsampM'*x(:)),[n,1]))*sqrt(1/m);
+% U=@(x) x(:);
+% Ut= @(x) x(:);
+% d=ones(m,1)*n/m;
 
 %Compressively sample the image
 y=M(x_0(:));
