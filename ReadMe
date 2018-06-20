@@ -60,9 +60,9 @@ Other files:
 LDAMP_TensorFlow Contents
 ---------------------------------------------------------------------------
 Code:
-    TrainLearnedDAMP.py: Code to train the LDAMP or LDIT networks. Supports layer-by-layer and end-to-end training. Supports training with SURE loss.
+    TrainLearnedDAMP.py: Code to train the LDAMP or LDIT networks. Supports layer-by-layer and end-to-end training. Supports training with SURE and GSURE loss.
     TestLearnedDAMP.py: Code to test the LDAMP or LDIT networks. Supports layer-by-layer end-to-end, and denoiser-by-denoiser trained networks.
-    TrainDnCNN.py: Code to train a TensorFlow implementation of DnCNN. Supports training with SURE and GSURE loss.
+    TrainDnCNN.py: Code to train a TensorFlow implementation of DnCNN. Supports training with SURE loss.
     TestLearnedDAMP.py: Code to test a TensorFlow implementation of DnCNN.
     LearnedDAMP.py: Module that contains the implementations of and support functions for LDAMP, LDIT, and DnCNN.
     Training_Script.sh: Bash script to train LDAMP, LDIT, and DnCNN networks.
