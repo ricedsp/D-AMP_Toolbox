@@ -2,25 +2,15 @@
 
 Matlab and TensorFlow implementations of algorithms from the following papers.
 
-Reference #1          : "From Denoising to Compressed Sensing", published in IEEE Trans. Info. Theory, 2016
-Authors               : Christopher A. Metzler, Arian Maleki, Richard G. Baraniuk
-Download              : http://arxiv.org/abs/1406.4175
+Metzler, Christopher A., Arian Maleki, and Richard G. Baraniuk. "From denoising to compressed sensing." IEEE Transactions on Information Theory 62.9 (2016). http://arxiv.org/abs/1406.4175
 
-Reference #2          : "Denoising-based Vector AMP" 
-Authors               : Philip Schniter, Sundeep Rangan, Alyson K. Fletcher
-Download              : http://arxiv.org/abs/1611.01376
+Schniter, Philip, Sundeep Rangan, and Alyson Fletcher. "Denoising based vector approximate message passing." arXiv preprint arXiv:1611.01376 (2016). http://arxiv.org/abs/1611.01376
 
-Reference #3          : "BM3D-PRGAMP: Compressive phase retrieval based on BM3D denoising" 
-Authors               : Christopher A. Metzler, Arian Maleki, Richard G. Baraniuk
-Download              : http://ieeexplore.ieee.org/abstract/document/7532810/
+Metzler, Christopher A., Arian Maleki, and Richard G. Baraniuk. "BM3D-prgamp: compressive phase retrieval based on BM3D denoising." Image Processing (ICIP), 2016 IEEE International Conference on. IEEE, 2016. http://ieeexplore.ieee.org/abstract/document/7532810/
 
-Reference #4          : "Learned D-AMP: Principled Neural-Network-based Compressive Image Recovery" 
-Authors               : Christopher A. Metzler, Ali Mousavi, Richard G. Baraniuk
-Download              : https://arxiv.org/abs/1704.06625
+Metzler, ChChristopher A., Ali Mousavi, and Richard Baraniuk. "Learned D-AMP: Principled Neural Network based Compressive Image Recovery." Advances in Neural Information Processing Systems. 2017. http://papers.nips.cc/paper/6774-learned-d-amp-principled-neural-network-based-compressive-image-recovery.pdf
 
-Reference #5          : "Unsupervised Learning with Stein's Unbiased Risk Estimator" 
-Authors               : Christopher A. Metzler, Ali Mousavi, Reinhard Heckel, Richard G. Baraniuk
-Download              : https://arxiv.org/abs/1805.10531
+Metzler, Christopher A., Ali Mousavi, Reinhard Heckel, and Richard Baraniuk. "Unsupervised Learning with Stein's Unbiased Risk Estimator." https://arxiv.org/abs/1805.10531
 
 Questions/suggestions/comments: chris.metzler@rice.edu (D-AMP, D-prGAMP, LDAMP, and SURE) or schniter.1@osu.edu (D-VAMP)
 
