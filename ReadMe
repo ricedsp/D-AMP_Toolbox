@@ -72,6 +72,12 @@ Data:
 
 Important: At present the TensorFlow networks are smaller than the Matlab networks and have been trained with less data. For the best possible LDAMP performance use the 20 layer version of the "DnCNN" denoiser in CS_Imaging_Demo_LDAMP.m
 
+SURE_deep_image_prior Contents
+---------------------------------------------------------------------------
+denoising_wSURE.py: Code to denoise an image using a randomly initialized CNN using SURE.
+Other files are dependencies and come from https://github.com/DmitryUlyanov/deep-image-prior.
+
+
 Packages
 ---------------------------------------------------------------------------
 This download includes the BM3D, BLS-GSM, NLM, and Rice Wavelet Toolbox packages.
