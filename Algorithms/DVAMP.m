@@ -27,7 +27,10 @@ m=length(y);
 vampOpt = VampSlmOpt;
 vampOpt.nitMax = iters;
 vampOpt.learnNoisePrec = true;
-vampOpt.divChange = 0.1; % relative distance to probe when computing divergence
+if strcmp(denoiser,'BM3D')||strcmp(denoiser,'fast-BM3D')
+  vampOpt.divChange = 0.1; % relative distance to probe when computing divergence
+  %note: default value of 1e-3 works well for DnCNN
+end
 %vampOpt.tol = 1e-2; % early stopping
 
 if (nargin>6)&&(~isempty(Mt_func)) % function handles
