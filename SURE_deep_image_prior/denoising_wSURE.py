@@ -126,7 +126,7 @@ def closure():
     # Calculate the MC divergence and SURE loss before network changes (loss.backward())
     epsilon = 1e-3  # * torch.max(net_input)
     eta = input_noise_vec.normal_()
-    net_input_perturbed = net_input.data.clone() + (input_noise_vec.normal_() * epsilon)
+    net_input_perturbed = net_input.data.clone() + (eta * epsilon)
     out_perturbed = net(net_input_perturbed)
     dx=out_perturbed - out
     eta_dx = torch.sum(eta * dx)  # Inner product between eta and (x_perturbed-x). They must have the same dimensions
