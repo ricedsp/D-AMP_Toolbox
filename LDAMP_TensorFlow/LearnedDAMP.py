@@ -125,7 +125,7 @@ def GenerateMeasurementOperators(mode):
             signed_x=tf.transpose(signed_x)#Transpose because dct operates upon the last axes
             F_signed_x = mydct(signed_x, type=2, norm='ortho')
             F_signed_x=tf.transpose(F_signed_x)
-            F_signed_x = tf.reshape(F_signed_x, [height_img * width_img, BATCH_SIZE])*1./np.sqrt(m_fp)#This is a different normalization than in Matlab because the FFT is implemented differently in Matlab
+            F_signed_x = tf.reshape(F_signed_x, [height_img * width_img, BATCH_SIZE])*np.sqrt(n_fp/m_fp)
             out = tf.sparse_tensor_dense_matmul(sparse_sampling_matrix,F_signed_x,adjoint_a=False)
             return out
 
@@ -137,7 +137,7 @@ def GenerateMeasurementOperators(mode):
             Finv_z = myidct(z_padded,type=2,norm='ortho')
             Finv_z = tf.transpose(Finv_z)
             Finv_z = tf.reshape(Finv_z, [height_img*width_img, BATCH_SIZE])
-            out = tf.multiply(sign_vec, Finv_z)*n_fp/np.sqrt(m)
+            out = tf.multiply(sign_vec, Finv_z)*np.sqrt(n_fp/m_fp)
             return out
     else:
         raise ValueError('Measurement mode not recognized')
@@ -151,7 +151,7 @@ def mydct(x,type=2,norm='ortho'):
     Y=Y[:,:n]
     k = tf.complex(tf.range(n, dtype=tf.float32), tf.zeros(n, dtype=tf.float32))
     Y*=tf.exp(-1j*np.pi*k/(2.*n_fp))
-    return tf.real(Y)/tf.sqrt(n_fp)
+    return tf.real(Y)/tf.sqrt(n_fp)*tf.sqrt(2.)
     # return tf.spectral.dct(x,type=2,norm='ortho')
 def myidct(X,type=2,norm='ortho'):
     assert type==2 and norm=='ortho', 'Currently only type-II orthonormalized DCTs are supported'
@@ -171,7 +171,7 @@ def myidct(X,type=2,norm='ortho'):
     x=tf.reshape(
         tf.transpose(tf.concat([even_new, odd_new], axis=0)),
         [1,n])
-    return tf.real(x)*tf.sqrt(n_fp)
+    return tf.real(x)*tf.sqrt(n_fp)*1/tf.sqrt(2.)
 def mydct_np(x,type=2,norm='ortho'):
     assert type==2 and norm=='ortho', 'Currently only type-II orthonormalized DCTs are supported'
     assert BATCH_SIZE == 1, 'Fast-JL measurement matrices currently only support batch sizes of one'
@@ -181,7 +181,7 @@ def mydct_np(x,type=2,norm='ortho'):
     y[:N]=x
     Y=np.fft.fft(y)[:N]
     k=np.float32(range(N))
-    Y*=np.exp(-1j*np.pi*k/(2*N))/np.sqrt(N)
+    Y*=np.exp(-1j*np.pi*k/(2*N))/np.sqrt(N/2.)
     return Y.real
 def myidct_np(X,type=2,norm='ortho'):
     assert type==2 and norm=='ortho', 'Currently only type-II orthonormalized DCTs are supported'
@@ -197,7 +197,7 @@ def myidct_np(X,type=2,norm='ortho'):
     odd_new=np.flip(temp[N/2:],0)
     x[0::2] =even_new
     x[1::2]=odd_new
-    return np.real(x)*np.sqrt(N)
+    return np.real(x)*np.sqrt(N/2.)
 def GenerateMeasurementMatrix(mode):
     if mode == 'gaussian':
         A_val = np.float32(1. / np.sqrt(m_fp) * np.random.randn(m,n))  # values that parameterize the measurement model. This could be the measurement matrix itself or the random mask with coded diffraction patterns.
