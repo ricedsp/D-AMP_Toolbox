@@ -8,7 +8,7 @@ Schniter, Philip, Sundeep Rangan, and Alyson Fletcher. "Denoising based vector a
 
 Metzler, Christopher A., Arian Maleki, and Richard G. Baraniuk. "BM3D-prgamp: compressive phase retrieval based on BM3D denoising." Image Processing (ICIP), 2016 IEEE International Conference on. IEEE, 2016. http://ieeexplore.ieee.org/abstract/document/7532810/
 
-Metzler, ChChristopher A., Ali Mousavi, and Richard Baraniuk. "Learned D-AMP: Principled Neural Network based Compressive Image Recovery." Advances in Neural Information Processing Systems. 2017. http://papers.nips.cc/paper/6774-learned-d-amp-principled-neural-network-based-compressive-image-recovery.pdf
+Metzler, Christopher A., Ali Mousavi, and Richard Baraniuk. "Learned D-AMP: Principled Neural Network based Compressive Image Recovery." Advances in Neural Information Processing Systems. 2017. http://papers.nips.cc/paper/6774-learned-d-amp-principled-neural-network-based-compressive-image-recovery.pdf
 
 Metzler, Christopher A., Ali Mousavi, Reinhard Heckel, and Richard Baraniuk. "Unsupervised Learning with Stein's Unbiased Risk Estimator." https://arxiv.org/abs/1805.10531
 
@@ -115,6 +115,8 @@ The TensorFlow LDAMP/LDIT demos require that models and training data be downloa
 The Matlab LDAMP/LDVAMP demos (DnCNN-AMP) require that you have Matconvnet (http://www.vlfeat.org/matconvnet/) compiled and on your path.
 
 VAMP demos require that you have the latest version of the GAMPmatlab toolbox downloaded via the SVN interface (svn co svn://svn.code.sf.net/p/gampmatlab/code/ GAMPmatlab) and that you have GAMPmatlab/main and GAMPmatlab/VAMP on your path.
+
+RED demos require that you have FASTA on your path (https://github.com/tomgoldstein/fasta-matlab).
 
 # Installation
 The LDAMP_TensorFlow code were created and tested using TensorFlow 1.7 and Python 2.7.
