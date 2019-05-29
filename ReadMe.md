@@ -141,8 +141,11 @@ Our code was designed to make it as easy as possible to test D-(V)AMP with a new
 To test another denoiser in the D-(V)AMP algorithm, simply add an additional case statement to denoise.m and place your denoising function there.  (Your denoiser will have access to the noisy signal as well as an estimate of the standard deviation of the noise).
 Next change the "denoiser" argument in any calls to DAMP, DVAMP, DprGAMP, DIT, DAMP_oneIter, etc., to the name used in your case statement. e.g: `x_hat=DAMP(y,30,128,128,'mydenoiser',M);`
 
-# Issues
+# Known Issues
 The latest version of the Rice Wavelet Toolbox (RWT) does not compile under Windows 64 bit Matlab. Older versions of the RWT often crash. 
 At this point in time functions and scripts which use the RWT (CS_1D_Demo and the BLS-GSM denoiser) must be run on a Unix machine.  BM3D-AMP and other D-AMP algorithms work with Windows and Unix.
+
+# Acknowledgements
+Thanks to David Van Veen for help implementing an rgb version of D-AMP.
 
 ### Original release date : 8/7/14

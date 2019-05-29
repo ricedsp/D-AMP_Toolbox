@@ -1,4 +1,4 @@
-function [x_hat,PSNR] = DAMP(y,iters,width,height,denoiser,M_func,Mt_func,PSNR_func)
+function [x_hat,PSNR] = DAMP(y,iters,width,height,denoiser,M_func,Mt_func,PSNR_func,rgb)
 % function [x_hat,PSNR] = DAMP(y,iters,width,height,denoiser,M_func,Mt_func,PSNR_func)
 % this function implements D-AMP based on any denoiser present in the
 % denoise function
@@ -30,9 +30,18 @@ if (nargin<8)||isempty(PSNR_func) % no PSNR trajectory
     PSNR_func = @(x) nan;
 end
 
-denoi=@(noisy,sigma_hat) denoise(noisy,sigma_hat,width,height,denoiser);
+if nargin<9
+    rgb=false;
+end
 
-n=width*height;
+
+denoi=@(noisy,sigma_hat) denoise(noisy,sigma_hat,width,height,denoiser,rgb);
+
+if rgb
+	n=3*width*height;
+else
+	n=width*height;
+end
 m=length(y);
 
 z_t=y;
@@ -49,5 +58,9 @@ for i=1:iters
     div=eta*((denoi(pseudo_data+epsilon*eta',sigma_hat)-x_t)/epsilon);
     z_t=y-M(x_t)+1/m.*z_t.*div;
 end
-x_hat=reshape(x_t,[height width]);
+if rgb
+	x_hat=reshape(x_t,[height width,3]);
+else
+	x_hat=reshape(x_t,[height width]);
+end
 end
