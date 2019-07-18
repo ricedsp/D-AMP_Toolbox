@@ -284,7 +284,7 @@ for n_DAMP_layers in range(start_layer,max_n_DAMP_layers+1,1):
                         saver_initvars.restore(sess, saver_initvars_name_chckpt)
                 if InitWeightsMethod=='denoiser':
                     #load initial weights that were trained on a denoising problem
-                    saver_initvars_name_chckpt=LDAMP.GenDnCNNFilename(300./255.)+".ckpt"
+                    saver_initvars_name_chckpt=LDAMP.GenDnCNNFilename(300./255.,500./255.)+".ckpt"
                     iter = 0
                     for l in range(0, n_DnCNN_layers):
                         saver_dict.update({"l" + str(l) + "/w": theta[iter][0][l]})#, "l" + str(l) + "/b": theta[iter][1][l]})
