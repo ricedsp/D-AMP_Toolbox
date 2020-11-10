@@ -12,7 +12,7 @@ Metzler, Christopher A., Ali Mousavi, and Richard Baraniuk. "Learned D-AMP: Prin
 
 Metzler, Christopher A., Ali Mousavi, Reinhard Heckel, and Richard Baraniuk. "Unsupervised Learning with Stein's Unbiased Risk Estimator." https://arxiv.org/abs/1805.10531
 
-Questions/suggestions/comments: chris.metzler@rice.edu (D-AMP, D-prGAMP, LDAMP, and SURE) or schniter.1@osu.edu (D-VAMP)
+Questions/suggestions/comments: cmetzler@stanford.edu (D-AMP, D-prGAMP, LDAMP, and SURE) or schniter.1@osu.edu (D-VAMP)
 
 ---------------------------------------------------------------------------
 
