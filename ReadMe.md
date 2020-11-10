@@ -4,13 +4,15 @@ Matlab and TensorFlow implementations of algorithms from the following papers.
 
 Metzler, Christopher A., Arian Maleki, and Richard G. Baraniuk. "From denoising to compressed sensing." IEEE Transactions on Information Theory 62.9 (2016). http://arxiv.org/abs/1406.4175
 
-Schniter, Philip, Sundeep Rangan, and Alyson Fletcher. "Denoising based vector approximate message passing." arXiv preprint arXiv:1611.01376 (2016). http://arxiv.org/abs/1611.01376
+Metzler, Christopher A., Arian Maleki, and Richard G. Baraniuk. "BM3D-PRGAMP: Compressive phase retrieval based on BM3D denoising." Image Processing (ICIP), 2016 IEEE International Conference on. IEEE, 2016. http://ieeexplore.ieee.org/abstract/document/7532810/
 
-Metzler, Christopher A., Arian Maleki, and Richard G. Baraniuk. "BM3D-prgamp: compressive phase retrieval based on BM3D denoising." Image Processing (ICIP), 2016 IEEE International Conference on. IEEE, 2016. http://ieeexplore.ieee.org/abstract/document/7532810/
+Schniter, Philip, Sundeep Rangan, and Alyson Fletcher. "Denoising based vector approximate message passing." arXiv preprint arXiv:1611.01376 (2016). http://arxiv.org/abs/1611.01376
 
 Metzler, Christopher A., Ali Mousavi, and Richard Baraniuk. "Learned D-AMP: Principled Neural Network based Compressive Image Recovery." Advances in Neural Information Processing Systems. 2017. http://papers.nips.cc/paper/6774-learned-d-amp-principled-neural-network-based-compressive-image-recovery.pdf
 
 Metzler, Christopher A., Ali Mousavi, Reinhard Heckel, and Richard Baraniuk. "Unsupervised Learning with Stein's Unbiased Risk Estimator." https://arxiv.org/abs/1805.10531
+
+A. K. Fletcher, P. Pandit, S. Rangan, S. Sarkar, and P. Schniter. "Plug-in Estimation in High-Dimensional Linear Inverse Problems: A Rigorous Analysis," Proc. Neural Information Processing Systems Conference (NeurIPS) Dec. 2018. http://arxiv.org/abs/1806.10466
 
 Questions/suggestions/comments: cmetzler@stanford.edu (D-AMP, D-prGAMP, LDAMP, and SURE) or schniter.1@osu.edu (D-VAMP)
 
