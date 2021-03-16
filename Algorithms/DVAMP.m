@@ -1,8 +1,10 @@
 function [x_hat,PSNR,estFin,estHist] = DVAMP(y,iters,width,height,denoiser,M_func,Mt_func,PSNR_func,U_func,Ut_func, d, UtM_func,MtU_func)
-% function [x_hat,PSNR] = DVAMP(y,iters,width,height,denoiser,M_func,Mt_func,PSNR_func,U_func,Ut_func)
-% this function implements D-VAMP based on any denoiser present in the
-% denoise function
-% Required Input:
+%
+% [x_hat,PSNR] = DVAMP(y,iters,width,height,denoiser,M_func,Mt_func,PSNR_func,U_func,Ut_func)
+%
+% This function implements D-VAMP based on any provided denoiser.
+%
+% Required Inputs:
 %       y       : the measurements 
 %       iters   : the number of iterations
 %       width   : width of the sampled signal
@@ -10,21 +12,21 @@ function [x_hat,PSNR,estFin,estHist] = DVAMP(y,iters,width,height,denoiser,M_fun
 %       denoiser: string that determines which denosier to use. e.g., 'BM3D'
 %       M_func  : function handle that projects onto M. Or a matrix M.
 %
-% Option Input:
+% Optional Inputs:
 %       Mt_func : function handle that projects onto M'. Or a matrix M'.
 %       PSNR_func: function handle to evaluate PSNR
 %       U_func  : function handle to U in [U,D]=eig(M*M')
-%       Ut_func  : function handle to U' in [U,D]=eig(M*M')
-%       d : vector of diagonal elements from D in [U,D]=eig(M*M')
+%       Ut_func : function handle to U' in [U,D]=eig(M*M')
+%       d       : vector of diagonal elements from D in [U,D]=eig(M*M')
 % 
-% Output:
+% Outputs:
 %       x_hat   : the recovered signal.
 %       PSNR    : the PSNR trajectory.
 
 n=width*height;
 m=length(y);
 
-vampOpt = VampSlmOpt;
+vampOpt = VampSlmOpt3;
 vampOpt.nitMax = iters;
 vampOpt.learnNoisePrec = true;
 if strcmp(denoiser,'BM3D')||strcmp(denoiser,'fast-BM3D')
@@ -54,9 +56,9 @@ denoi = @(noisy,sigma2_hat) denoise(noisy,sqrt(sigma2_hat(1,:)),width,height,den
 
 % run VAMP
 if nargout==4
-  [x_t,estFin,estHist] = VampSlmEst(denoi,y,M_func,vampOpt);
+  [x_t,estFin,estHist] = VampSlmEst3(denoi,y,M_func,vampOpt);
 else
-  [x_t,estFin] = VampSlmEst(denoi,y,M_func,vampOpt);
+  [x_t,estFin] = VampSlmEst3(denoi,y,M_func,vampOpt);
 end
 x_hat=reshape(x_t,[height width]);
 PSNR = estFin.err;

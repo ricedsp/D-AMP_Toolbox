@@ -1,18 +1,22 @@
 function [x_hat,PSNR,estFin,estHist] = VAMP(y,iters,n,M_func,Mt_func,PSNR_func,U_func,Ut_func,d,UtM_func,MtU_func)
-% function [x_hat,PSNR] = VAMP(y,iters,n,M_func,Mt_func,PSNR_func)
+%
+% [x_hat,PSNR] = VAMP(y,iters,n,M_func,Mt_func,PSNR_func)
+%
 % This function implements VAMP for sparse recovery
-% Input:
+%
+% Inputs:
 %       y       : the measurements 
 %       iters   : the number of iterations
 %       n       : signal size
 %       M_func  : function handle that projects onto A. Or a matrix A.
 %       Mt_func : function handle that projects onto A'. Or no entry
 %       PSNR_func : optional function handle to evaluate PSNR
-% Output:
+%
+% Output:s
 %       x_hat   : the recovered signal.
 %       PSNR    : the PSNR trajectory.
 
-vampOpt = VampSlmOpt;
+vampOpt = VampSlmOpt3;
 vampOpt.nitMax = iters;
 
 if (nargin>4)&&(~isempty(Mt_func)) % function handles
@@ -39,8 +43,8 @@ denoi = SoftThreshDMMEstimIn(alf,'debias',debias);
 
 % run VAMP
 if nargout==4
-  [x_hat,estFin,estHist] = VampSlmEst(denoi,y,M_func,vampOpt);
+  [x_hat,estFin,estHist] = VampSlmEst3(denoi,y,M_func,vampOpt);
 else
-  [x_hat,estFin] = VampSlmEst(denoi,y,M_func,vampOpt);
+  [x_hat,estFin] = VampSlmEst3(denoi,y,M_func,vampOpt);
 end
 PSNR = estFin.err;
